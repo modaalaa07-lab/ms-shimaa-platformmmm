@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Certificate | Ms. Shaimaa Faisal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Great+Vibes&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { background-color: #f3f4f6; font-family: 'Montserrat', sans-serif; }
+        .cert-container {
+            width: 1000px;
+            height: 700px;
+            padding: 40px;
+            background: white;
+            position: relative;
+            border: 20px solid #1E3A8A; /* Dark Blue */
+            box-shadow: 0 0 50px rgba(0,0,0,0.2);
+        }
+        .inner-border {
+            border: 4px solid #FBBF24; /* Gold */
+            height: 100%;
+            width: 100%;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .title { font-family: 'Cinzel', serif; color: #1E3A8A; font-size: 60px; letter-spacing: 5px; }
+        .student-name { font-family: 'Great Vibes', cursive; color: #FBBF24; font-size: 70px; margin: 20px 0; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; min-width: 400px; text-align: center; }
+        .platform-name { font-weight: 900; color: #1E3A8A; font-size: 24px; text-transform: uppercase; }
+        @media print {
+            body { background: none; padding: 0; }
+            .no-print { display: none; }
+            .cert-container { box-shadow: none; margin: 0; border-width: 15px; }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen">
+
+    <div id="certificate" class="cert-container">
+        <div class="inner-border">
+            <div class="flex gap-10 mb-6 text-4xl opacity-20">
+                <i class="fas fa-graduation-cap"></i>
+                <i class="fas fa-book"></i>
+                <i class="fas fa-award"></i>
+            </div>
+
+            <h1 class="title">CERTIFICATE</h1>
+            <p class="text-xl uppercase tracking-[0.3em] text-gray-400 mt-2">OF COMPLETION</p>
+
+            <p class="mt-8 text-lg italic text-gray-600">This is to officially certify that</p>
+            
+            <h2 id="dispName" class="student-name">Loading...</h2>
+
+            <p class="text-lg text-gray-600 max-w-2xl text-center leading-relaxed">
+                has successfully passed the examination with excellence on the 
+                <span class="platform-name">Ms. Shaimaa Faisal</span> Educational Platform.
+            </p>
+
+            <div class="mt-10 grid grid-cols-2 gap-20 w-full px-20 text-center">
+                <div class="border-t-2 border-gray-200 pt-4">
+                    <p class="text-sm font-bold text-gray-400 uppercase">Score Achieved</p>
+                    <p id="dispScore" class="text-2xl font-black text-navy" style="color:#1E3A8A">0/0</p>
+                </div>
+                <div class="border-t-2 border-gray-200 pt-4">
+                    <p class="text-sm font-bold text-gray-400 uppercase">Issue Date</p>
+                    <p id="dispDate" class="text-2xl font-black text-navy" style="color:#1E3A8A">--/--/----</p>
+                </div>
+            </div>
+
+            <div class="mt-12 flex justify-between w-full items-end px-10">
+                <div class="text-center">
+                    <p class="text-xs text-gray-400 uppercase tracking-widest">Platform ID</p>
+                    <p class="text-[10px] font-mono">MS-CERT-2026</p>
+                </div>
+                <div class="text-center flex flex-col items-center">
+                    <p class="font-bold text-navy italic text-xl mb-1" style="color:#1E3A8A">Shaimaa Faisal</p>
+                    <div class="w-32 h-[1px] bg-gray-400 mb-2"></div>
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Instructor Signature</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-10 flex gap-4 no-print">
+        <button onclick="window.print()" class="bg-navy text-white px-8 py-4 rounded-full font-black shadow-2xl hover:bg-blue-900 transition flex items-center gap-3" style="background-color: #1E3A8A">
+            <i class="fas fa-print"></i> PRINT CERTIFICATE
+        </button>
+        <button onclick="window.location.href='main.html'" class="bg-gray-800 text-white px-8 py-4 rounded-full font-black shadow-2xl hover:bg-black transition">
+            BACK TO HOME
+        </button>
+    </div>
+
+    <script>
+        // سحب البيانات من localStorage
+        const name = localStorage.getItem('currentStudentName') || "Student Name";
+        const score = localStorage.getItem('lastScore') || "0/0";
+        const date = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+
+        document.getElementById('dispName').innerText = name;
+        document.getElementById('dispScore').innerText = score;
+        document.getElementById('dispDate').innerText = date;
+    </script>
+
+</body>
+</html>

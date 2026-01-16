@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Ms. Shaimaa Faisal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #F8FAFC; }
+        .bg-navy { background-color: #1E3A8A; }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-md border-t-8 border-blue-600 animate-fade-in">
+        <div class="text-center mb-8">
+            <div class="inline-block p-4 bg-blue-50 rounded-full mb-4">
+                <i class="fas fa-sign-in-alt text-navy text-3xl" style="color:#1E3A8A"></i>
+            </div>
+            <h1 class="text-3xl font-black text-navy uppercase tracking-tight" style="color:#1E3A8A">Welcome Back</h1>
+            <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mt-2">Login to your account</p>
+        </div>
+        
+        <form id="loginForm" class="space-y-5">
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase ml-1 mb-1">Username</label>
+                <div class="relative">
+                    <i class="fas fa-user absolute left-4 top-4 text-gray-300"></i>
+                    <input type="text" id="loginUser" class="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl focus:border-blue-600 focus:bg-white outline-none transition-all font-bold" placeholder="Enter your name" required>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase ml-1 mb-1">Password</label>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-4 top-4 text-gray-300"></i>
+                    <input type="password" id="loginPass" class="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl focus:border-blue-600 focus:bg-white outline-none transition-all font-bold" placeholder="Enter password" required>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-navy text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-900 transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2" style="background-color:#1E3A8A">
+                LOG IN <i class="fas fa-rocket"></i>
+            </button>
+        </form>
+
+        <div class="mt-8 pt-6 border-t border-gray-100 text-center">
+            <p class="text-gray-500 font-medium">Don't have an account?</p>
+            <a href="signup.html" class="text-blue-600 font-black hover:text-blue-800 transition tracking-tight uppercase text-sm">Create New Account</a>
+        </div>
+    </div>
+
+    <script>
+        // لو الطالب مسجل دخوله فعلاً، وفتحت صفحة الـ Login بالصدفة، دخله علطول
+if (localStorage.getItem('currentStudentName')) {
+    window.location.href = '/main.html';
+}
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPass').value;
+            // كود حماية بسيط: يمنع كليك يمين بس عشان الفيديوهات
+document.addEventListener('contextmenu', event => event.preventDefault());
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await res.json();
+
+                if (result.success) {
+                    // أهم جزء: تخزين بيانات الجلسة
+                    localStorage.setItem('currentStudentName', result.username);
+                    localStorage.setItem('userRole', result.role);
+                    
+                    // لو الطالب ليه جريد متسجل في السيرفر، بنخزنه
+                    if(result.grade) {
+                        localStorage.setItem('studentGrade', result.grade);
+                    }
+
+                    // التوجيه بناءً على الرول
+                    if (result.role === 'admin') {
+                        window.location.href = '/admin.html';
+                    } else {
+                        window.location.href = '/main.html'; // صفحة الطالب
+                    }
+                } else {
+                    alert("Invalid Username or Password!");
+                }
+            } catch (err) {
+                alert("Server Connection Error!");
+            }
+        });
+    </script>
+</body>
+</html>

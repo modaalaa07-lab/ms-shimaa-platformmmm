@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Us | Ms. Shaimaa Faisal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #F8FAFC; }
+        .bg-navy { background-color: #1E3A8A; }
+        .text-gold { color: #FBBF24; }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white p-8 rounded-[2rem] shadow-2xl w-full max-w-md border-t-8 border-yellow-500 animate-fade-in">
+        <div class="text-center mb-8">
+            <div class="inline-block p-4 bg-blue-50 rounded-full mb-4">
+                <i class="fas fa-user-plus text-navy text-3xl"></i>
+            </div>
+            <h1 class="text-3xl font-black text-navy uppercase tracking-tight">Create Account</h1>
+            <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mt-2">Join Ms. Shaimaa's Platform</p>
+        </div>
+        
+        <form id="signupForm" class="space-y-5">
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase ml-1 mb-1">Full Name</label>
+                <div class="relative">
+                    <i class="fas fa-user absolute left-4 top-4 text-gray-300"></i>
+                    <input type="text" id="regUser" class="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl focus:border-yellow-500 focus:bg-white outline-none transition-all font-bold" placeholder="Your Triple Name" required>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase ml-1 mb-1">Password</label>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-4 top-4 text-gray-300"></i>
+                    <input type="password" id="regPass" class="w-full pl-11 pr-4 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl focus:border-yellow-500 focus:bg-white outline-none transition-all font-bold" placeholder="Create Password" required>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-black text-gray-500 uppercase ml-1 mb-1">Select Your Grade</label>
+                <select id="regGrade" class="w-full px-4 py-3.5 bg-gray-50 border-2 border-transparent rounded-2xl focus:border-yellow-500 focus:bg-white outline-none transition-all font-bold cursor-pointer">
+                    <option value="4">Grade 4</option>
+                    <option value="5">Grade 5</option>
+                    <option value="6">Grade 6</option>
+                    <option value="7">Grade 7</option>
+                    <option value="8">Grade 8</option>
+                    <option value="9">Grade 9</option>
+                </select>
+            </div>
+
+            <button type="submit" class="w-full bg-navy text-white py-4 rounded-2xl font-black text-lg shadow-xl hover:bg-blue-900 transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2" style="background-color:#1E3A8A">
+                SIGN UP NOW <i class="fas fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <div class="mt-8 pt-6 border-t border-gray-100 text-center">
+            <p class="text-gray-500 font-medium">Already have an account?</p>
+            <a href="login.html" class="text-navy font-black hover:text-yellow-600 transition tracking-tight">LOG IN HERE</a>
+        </div>
+    </div>
+
+    <script>
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const username = document.getElementById('regUser').value;
+        const grade = document.getElementById('regGrade').value;
+
+        const data = {
+            username: username,
+            password: document.getElementById('regPass').value,
+            grade: grade
+        };
+
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+
+            const result = await res.json();
+            
+            if(result.success) {
+                // 1. حفظ بيانات الطالب في المتصفح عشان يفضل مسجل دخول
+                localStorage.setItem('currentStudentName', username);
+                localStorage.setItem('studentGrade', grade);
+                localStorage.setItem('userRole', 'student');
+                
+                alert("Welcome! Account created successfully.");
+                
+                // 2. توجيهه فوراً لصفحة الطالب (تأكد من اسم الملف عندك)
+                window.location.href = '/main.html'; 
+            } else {
+                alert(result.message || "Registration failed");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Error: Make sure the server is running on localhost:3000");
+        }
+    });
+</script>
+</body>
+</html>
