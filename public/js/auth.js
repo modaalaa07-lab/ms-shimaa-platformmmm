@@ -18,6 +18,10 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
         const data = await response.json();
 
+        localStorage.setItem('username', data.username);
+localStorage.setItem('role', data.role);
+localStorage.setItem('grade', data.grade);
+
         if (response.ok && data.success) {
             localStorage.setItem('user', JSON.stringify(data));
             
@@ -35,4 +39,5 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         console.error("Connection Error:", err);
         alert("Cannot connect to server. Make sure node server.js is running.");
     }
+
 });
