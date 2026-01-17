@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv').config(); // تأكدت إن الـ r صغيرة 100%
 
 const express = require('express');
 const path = require('path');
@@ -11,31 +11,29 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* ===============================
-   Supabase Connection (SECURE)
+   1️⃣ Supabase Secure Connection
 ================================ */
-
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
-    console.error("❌ SUPABASE ENV VARIABLES MISSING");
+    console.error("❌ SUPABASE ENV VARIABLES MISSING - Check Vercel Settings");
     process.exit(1);
 }
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ===============================
-   Middlewares
+   2️⃣ Middlewares
 ================================ */
-
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 /* ===============================
-   Multer (Uploads)
+   3️⃣ Multer (Temporary Storage for Vercel)
 ================================ */
-
 const storage = multer.diskStorage({
     destination: (req, file, cb) => cb(null, '/tmp'),
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
@@ -43,12 +41,13 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 /* ===============================
-   AUTH – LOGIN
+   4️⃣ AUTH – LOGIN & REGISTER
 ================================ */
 
+// تسجيل الدخول مع فحص حالة الحساب (is_active)
 app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
-
+    
     const { data: user, error } = await supabase
         .from('students')
         .select('*')
@@ -56,38 +55,38 @@ app.post('/api/auth/login', async (req, res) => {
         .single();
 
     if (error || !user) {
-        return res.status(401).json({ success: false, message: "Invalid credentials" });
+        return res.status(401).json({ success: false, message: "اسم المستخدم أو كلمة المرور غير صحيحة" });
     }
 
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    if (!passwordMatch) {
-        return res.status(401).json({ success: false, message: "Invalid credentials" });
+    // فحص الباسورد (يدعم القديم النصي والجديد المشفر بـ bcrypt)
+    const isMatch = (password === user.password) || await bcrypt.compare(password, user.password).catch(() => false);
+    
+    if (!isMatch) {
+        return res.status(401).json({ success: false, message: "اسم المستخدم أو كلمة المرور غير صحيحة" });
     }
 
-    if (user.is_active === false) {
-        return res.status(403).json({
-            success: false,
-            message: "Account pending activation"
+    // نظام القفل - المنع لو الحساب غير مفعل
+    if (user.is_active === false || user.is_active === null) {
+        return res.status(403).json({ 
+            success: false, 
+            message: "حسابك قيد المراجعة. تواصل مع الإدارة لتفعيل حسابك." 
         });
     }
 
-    res.json({
-        success: true,
-        username: user.username,
-        role: user.role,
-        grade: user.grade
+    res.json({ 
+        success: true, 
+        username: user.username, 
+        role: user.role, 
+        grade: user.grade 
     });
 });
 
-/* ===============================
-   AUTH – REGISTER
-================================ */
-
+// تسجيل حساب جديد (بيكون مقفول أوتوماتيك)
 app.post('/api/auth/register', async (req, res) => {
     const { username, password, grade } = req.body;
 
     if (!username || !password || !grade) {
-        return res.status(400).json({ success: false, message: "Missing data" });
+        return res.status(400).json({ success: false, message: "بيانات التسجيل ناقصة" });
     }
 
     const { data: exists } = await supabase
@@ -97,7 +96,7 @@ app.post('/api/auth/register', async (req, res) => {
         .single();
 
     if (exists) {
-        return res.status(409).json({ success: false, message: "Username already exists" });
+        return res.status(409).json({ success: false, message: "اسم المستخدم موجود بالفعل" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -107,19 +106,15 @@ app.post('/api/auth/register', async (req, res) => {
         password: hashedPassword,
         grade,
         role: 'student',
-        is_active: false
+        is_active: false // يسجل كحساب معلق
     }]);
 
-    if (error) {
-        console.error(error);
-        return res.status(500).json({ success: false });
-    }
-
+    if (error) return res.status(500).json({ success: false, message: "خطأ في قاعدة البيانات" });
     res.json({ success: true });
 });
 
 /* ===============================
-   ADMIN – USERS
+   5️⃣ ADMIN – USERS MANAGEMENT
 ================================ */
 
 app.get('/api/admin/users', async (req, res) => {
@@ -127,30 +122,42 @@ app.get('/api/admin/users', async (req, res) => {
     res.json(data || []);
 });
 
+// تفعيل أو إيقاف الطالب من لوحة التحكم
 app.post('/api/admin/users/activate', async (req, res) => {
     const { username, status } = req.body;
-
+    
     const { error } = await supabase
         .from('students')
         .update({ is_active: status })
         .eq('username', username);
+
+    if (error) return res.status(500).json({ success: false, message: error.message });
+    res.json({ success: true, message: "تم تحديث الحالة بنجاح" });
+});
+
+app.delete('/api/admin/users/:username', async (req, res) => {
+    const { error } = await supabase
+        .from('students')
+        .delete()
+        .eq('username', req.params.username);
 
     if (error) return res.status(500).json({ success: false });
     res.json({ success: true });
 });
 
 /* ===============================
-   COURSES / EXAMS
+   6️⃣ COURSES & EXAMS
 ================================ */
 
 app.post('/api/courses', upload.single('file'), async (req, res) => {
     const { title, grade, type } = req.body;
+    if (!req.file) return res.status(400).send("No file uploaded");
 
     const { error } = await supabase.from('courses').insert([{
         title,
         grade,
         type,
-        filePath: req.file ? `/uploads/${req.file.filename}` : null
+        filePath: `/uploads/${req.file.filename}`
     }]);
 
     if (error) return res.status(500).send("Upload Error");
@@ -159,38 +166,52 @@ app.post('/api/courses', upload.single('file'), async (req, res) => {
 
 app.get('/api/content', async (req, res) => {
     const grade = req.query.grade;
-
     let lessons = supabase.from('courses').select('*');
     let exams = supabase.from('exams').select('*');
 
-    if (grade !== 'all') {
+    if (grade && grade !== 'all') {
         lessons = lessons.eq('grade', grade);
         exams = exams.eq('grade', grade);
     }
 
     const { data: l } = await lessons;
     const { data: e } = await exams;
-
     res.json({ lessons: l || [], exams: e || [] });
 });
 
+app.post('/api/exams', async (req, res) => {
+    const { error } = await supabase.from('exams').insert([req.body]);
+    if (error) return res.status(500).json({ success: false });
+    res.json({ success: true });
+});
+
+app.delete('/api/content/:type/:id', async (req, res) => {
+    const { error } = await supabase
+        .from(req.params.type)
+        .delete()
+        .eq('id', req.params.id);
+
+    if (error) return res.status(500).json({ success: false });
+    res.json({ success: true });
+});
+
 /* ===============================
-   RESULTS
+   7️⃣ RESULTS & STATS
 ================================ */
 
 app.post('/api/results', async (req, res) => {
-    const { error } = await supabase.from('results').insert([{
-        ...req.body,
-        date: new Date().toISOString()
-    }]);
+    const { error } = await supabase
+        .from('results')
+        .insert([{ ...req.body, date: new Date().toISOString() }]);
 
     if (error) return res.status(500).send("Save Error");
     res.json({ success: true });
 });
 
-/* ===============================
-   STATS
-================================ */
+app.get('/api/results', async (req, res) => {
+    const { data } = await supabase.from('results').select('*');
+    res.json(data || []);
+});
 
 app.get('/api/admin/stats', async (req, res) => {
     const { count } = await supabase
@@ -201,9 +222,8 @@ app.get('/api/admin/stats', async (req, res) => {
 });
 
 /* ===============================
-   START
+   8️⃣ START SERVER
 ================================ */
-
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PORT}`);
 });
