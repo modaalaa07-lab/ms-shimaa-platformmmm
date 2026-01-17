@@ -1,201 +1,250 @@
+require('dotenv').config(); // تحميل env
+
 const express = require('express');
 const path = require('path');
-const fs = require('fs-extra');
-const multer = require('multer');
 const cors = require('cors');
+const multer = require('multer');
+const bcrypt = require('bcryptjs');
+const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+/* ===============================
+   1️⃣ Supabase Secure Connection
+================================ */
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
+
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.error("❌ SUPABASE ENV MISSING");
+    process.exit(1);
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ===============================
+   2️⃣ Middlewares
+================================ */
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-const DATA_DIR = path.join('/tmp', 'data'); // استخدام مجلد مؤقت للكتابة في Vercel
-const UPLOADS_DIR = path.join('/tmp', 'uploads');
-
-const DB = {
-    users: path.join(DATA_DIR, 'users.json'),
-    courses: path.join(DATA_DIR, 'courses.json'),
-    exams: path.join(DATA_DIR, 'exams.json'),
-    results: path.join(DATA_DIR, 'results.json')
-};
-
-async function initStorage() {
-    await fs.ensureDir(DATA_DIR);
-    await fs.ensureDir(path.join(UPLOADS_DIR, 'courses'));
-    for (let key in DB) {
-        if (!await fs.pathExists(DB[key])) {
-            await fs.writeJson(DB[key], key === 'users' ? [
-                { "username": "admin", "password": "070988", "role": "admin" },
-                { "username": "shimaa faisal", "password": "070988", "role": "student", "grade": "9", "status": "active" }
-            ] : []);
-        }
-    }
-}
-initStorage();
+/* ===============================
+   3️⃣ Multer Upload (Safe)
+================================ */
 
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, '/tmp/uploads/courses'),
+    destination: (req, file, cb) => cb(null, '/tmp'),
     filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
 });
 const upload = multer({ storage });
 
-// --- 4. نظام الحسابات (Auth) ---
+/* ===============================
+   4️⃣ AUTH – LOGIN
+================================ */
 
-// أ) تسجيل دخول (Login) - تم التعديل لإرسال الـ Grade
-app.post('/api/auth/login', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        const users = await fs.readJson(DB.users);
-        const user = users.find(u => u.username === username && u.password === password);
-        
-        if (user) {
-            // بنبعت كل البيانات اللي محتاجها المتصفح
-            res.json({ 
-                success: true, 
-                username: user.username, 
-                role: user.role, 
-                grade: user.grade || "all" 
-            });
-        } else {
-            res.status(401).json({ success: false, message: "Wrong credentials" });
-        }
-    } catch (err) { res.status(500).send("Login Server Error"); }
+app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+    
+    const { data: user, error } = await supabase
+        .from('students')
+        .select('*')
+        .eq('username', username)
+        .single();
+
+    if (error || !user || user.password !== password) {
+        return res.status(401).json({ success: false, message: "بيانات الدخول غير صحيحة" });
+    }
+
+    // السطر ده هو اللي بيعمل "القفل"
+    if (user.is_active === false || user.is_active === null) {
+        return res.status(403).json({ 
+            success: false, 
+            message: "حسابك قيد المراجعة. تواصل مع الإدارة لتفعيل حسابك." 
+        });
+    }
+
+    res.json({ success: true, user });
 });
 
-// ب) إنشاء حساب (Register)
+/* ===============================
+   5️⃣ AUTH – REGISTER
+================================ */
+
 app.post('/api/auth/register', async (req, res) => {
-    try {
-        const users = await fs.readJson(DB.users);
-        const { username, password, grade } = req.body;
+    const { username, password, grade } = req.body;
 
-        if (users.find(u => u.username === username)) {
-            return res.status(400).json({ success: false, message: "Username already exists!" });
-        }
+    if (!username || !password || !grade) {
+        return res.status(400).json({
+            success: false,
+            message: "بيانات التسجيل ناقصة"
+        });
+    }
 
-        const newUser = {
-            username,
-            password,
-            grade,
-            role: 'student',
-            status: 'active' // ممكن تخليها pending لو عايز توافق عليهم الأول
-        };
+    // Check duplicate
+    const { data: exists } = await supabase
+        .from('students')
+        .select('id')
+        .eq('username', username)
+        .single();
 
-        users.push(newUser);
-        await fs.writeJson(DB.users, users);
-        res.json({ success: true });
-    } catch (err) { res.status(500).send("Registration Error"); }
+    if (exists) {
+        return res.status(409).json({
+            success: false,
+            message: "اسم المستخدم موجود"
+        });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const { error } = await supabase.from('students').insert([{
+        username,
+        password: hashedPassword,
+        grade,
+        role: 'student'
+    }]);
+
+    if (error) {
+        console.error(error);
+        return res.status(500).json({ success: false });
+    }
+
+    res.json({ success: true });
 });
 
-// --- 5. نظام الإدارة (Admin Control) ---
+/* ===============================
+   6️⃣ ADMIN – USERS
+================================ */
 
-// جلب كل المستخدمين للأدمن
 app.get('/api/admin/users', async (req, res) => {
-    const users = await fs.readJson(DB.users);
-    res.json(users.filter(u => u.role !== 'admin'));
+    const { data } = await supabase.from('students').select('*');
+    res.json(data || []);
 });
 
-// طرد أو حذف مستخدم
 app.delete('/api/admin/users/:username', async (req, res) => {
-    try {
-        let users = await fs.readJson(DB.users);
-        users = users.filter(u => u.username !== req.params.username);
-        await fs.writeJson(DB.users, users);
-        res.json({ success: true });
-    } catch (err) { res.status(500).send("Error deleting user"); }
+    const { error } = await supabase
+        .from('students')
+        .delete()
+        .eq('username', req.params.username);
+
+    if (error) return res.status(500).json({ success: false });
+    res.json({ success: true });
 });
 
-// --- 6. الدروس والامتحانات (Content) ---
+// كود لتفعيل أو إيقاف حساب طالب من لوحة التحكم
+app.post('/api/admin/users/activate', async (req, res) => {
+    const { username, status } = req.body; // status هيكون true للتفعيل و false للإيقاف
+    
+    const { error } = await supabase
+        .from('students')
+        .update({ is_active: status })
+        .eq('username', username);
+
+    if (error) return res.status(500).json({ success: false, message: error.message });
+    
+    res.json({ success: true, message: "تم تحديث حالة الحساب بنجاح" });
+});
+
+/* ===============================
+   7️⃣ COURSES & EXAMS
+================================ */
 
 app.post('/api/courses', upload.single('file'), async (req, res) => {
-    try {
-        const courses = await fs.readJson(DB.courses);
-        courses.push({ id: Date.now(), ...req.body, filePath: `/uploads/courses/${req.file.filename}` });
-        await fs.writeJson(DB.courses, courses);
-        res.json({ success: true });
-    } catch (err) { res.status(500).send("Upload Error"); }
+    const { title, grade, type } = req.body;
+
+    const { error } = await supabase.from('courses').insert([{
+        title,
+        grade,
+        type,
+        filePath: `/uploads/${req.file.filename}`
+    }]);
+
+    if (error) return res.status(500).send("Upload Error");
+    res.json({ success: true });
 });
 
 app.get('/api/content', async (req, res) => {
-    const requestedGrade = req.query.grade;
-    try {
-        const allCourses = await fs.readJson(DB.courses);
-        const allExams = await fs.readJson(DB.exams);
-        
-        if (requestedGrade === 'all') {
-            return res.json({ lessons: allCourses, exams: allExams });
-        }
-        const lessons = allCourses.filter(c => c.grade == requestedGrade);
-        const exams = allExams.filter(e => e.grade == requestedGrade);
-        res.json({ lessons, exams });
-    } catch (err) { res.json({ lessons: [], exams: [] }); }
+    const grade = req.query.grade;
+
+    let lessons = supabase.from('courses').select('*');
+    let exams = supabase.from('exams').select('*');
+
+    if (grade !== 'all') {
+        lessons = lessons.eq('grade', grade);
+        exams = exams.eq('grade', grade);
+    }
+
+    const { data: l } = await lessons;
+    const { data: e } = await exams;
+
+    res.json({ lessons: l || [], exams: e || [] });
 });
 
 app.post('/api/exams', async (req, res) => {
-    try {
-        const exams = await fs.readJson(DB.exams).catch(() => []);
-        exams.push({ id: Date.now(), ...req.body });
-        await fs.writeJson(DB.exams, exams);
-        res.json({ success: true });
-    } catch (err) { res.status(500).send("Error saving exam"); }
+    const { error } = await supabase.from('exams').insert([req.body]);
+    if (error) return res.status(500).json({ success: false });
+    res.json({ success: true });
 });
 
-// --- 7. النتائج (Results) ---
+app.delete('/api/content/:type/:id', async (req, res) => {
+    const { error } = await supabase
+        .from(req.params.type)
+        .delete()
+        .eq('id', req.params.id);
+
+    if (error) return res.status(500).json({ success: false });
+    res.json({ success: true });
+});
+
+/* ===============================
+   8️⃣ RESULTS
+================================ */
 
 app.post('/api/results', async (req, res) => {
-    try {
-        const results = await fs.readJson(DB.results).catch(() => []);
-        results.push({ ...req.body, date: new Date().toLocaleString('ar-EG') });
-        await fs.writeJson(DB.results, results);
-        res.json({ success: true });
-    } catch (err) { res.status(500).send("Error saving result"); }
+    const { error } = await supabase
+        .from('results')
+        .insert([{ ...req.body, date: new Date().toISOString() }]);
+
+    if (error) return res.status(500).send("Save Error");
+    res.json({ success: true });
 });
 
 app.get('/api/results', async (req, res) => {
-    const results = await fs.readJson(DB.results).catch(() => []);
-    res.json(results);
+    const { data } = await supabase.from('results').select('*');
+    res.json(data || []);
 });
 
 app.delete('/api/clear-results', async (req, res) => {
-    try {
-        await fs.writeJson(DB.results, []); 
-        res.json({ success: true });
-    } catch (err) { res.status(500).send("Clear error"); }
+    const { error } = await supabase.from('results').delete().neq('id', 0);
+    if (error) return res.status(500).send("Clear Error");
+    res.json({ success: true });
 });
 
-// كود جلب الإحصائيات للأدمن
-app.get('/api/admin/stats', (req, res) => {
-    try {
-        // 1. قراءة ملف المستخدمين (تأكد من المسار صح عندك)
-        const usersData = fs.readFileSync('./data/users.json', 'utf8');
-        const users = JSON.parse(usersData || '[]');
-        
-        // 2. قراءة ملف النتائج (لو مش موجود هيدي 0)
-        let results = [];
-        if (fs.existsSync('./data/results.json')) {
-            results = JSON.parse(fs.readFileSync('./data/results.json', 'utf8') || '[]');
-        }
+/* ===============================
+   9️⃣ STATS
+================================ */
 
-        // 3. حساب عدد الطلاب (اللي دورهم student)
-        const studentCount = users.filter(u => u.role === 'student').length;
+app.get('/api/admin/stats', async (req, res) => {
+    const { count } = await supabase
+        .from('students')
+        .select('*', { count: 'exact', head: true });
 
-        // 4. نبعت البيانات للمتصفح
-        res.json({
-            totalStudents: studentCount,
-            bestExam: results.length > 0 ? "Exams Active" : "No Exams Yet"
-        });
-
-    } catch (err) {
-        console.error("Server Stats Error:", err);
-        res.json({ totalStudents: 0, bestExam: "Data Error" });
-    }
+    res.json({
+        totalStudents: count || 0,
+        bestExam: "Connected"
+    });
 });
 
-// --- 8. تشغيل السيرفر ---
+/* ===============================
+   🔟 START SERVER
+================================ */
+
 app.listen(PORT, () => {
-    console.log(`🚀 Server is ACTIVE on port ${PORT}`);
+    console.log(`🚀 Server running on port ${PORT}`);
 });
 
-module.exports = app; // السطر ده حيوي جداً لـ Vercel
+module.exports = app;

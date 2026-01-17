@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | Ms. Shaimaa Faisal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { background-color: #F8FAFC; }
+        .bg-navy { background-color: #1E3A8A; }
+        .text-gold { color: #FBBF24; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+    <header class="bg-navy text-white p-4 shadow-2xl flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-user-shield text-gold text-2xl"></i>
+            <h1 class="text-xl font-bold">Welcome, Ms. Shaimaa</h1>
+        </div>
+        <a href="main.html" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-bold transition">
+            <i class="fas fa-eye"></i> Student View
+        </a>
+    </header>
+
+    <main class="container mx-auto p-6 flex-grow">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+    <div class="bg-blue-100 p-6 rounded-xl border-l-8 border-blue-600 shadow-sm">
+        <h3 class="text-blue-800 font-bold uppercase text-xs tracking-wider">Total Registered Students</h3>
+        <p id="statTotalStudents" class="text-3xl font-black text-blue-900 mt-2">Loading...</p>
+    </div>
+    <div class="bg-green-100 p-6 rounded-xl border-l-8 border-green-600 shadow-sm">
+        <h3 class="text-green-800 font-bold uppercase text-xs tracking-wider">Top Performing Exam</h3>
+        <p id="statBestExam" class="text-3xl font-black text-green-900 mt-2">Loading...</p>
+    </div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <section class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-blue-500">
+                <h2 class="text-2xl font-bold text-navy mb-6 italic underline">Upload New Lesson</h2>
+                <form id="uploadCourseForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700">Lesson Title</label>
+                        <input type="text" id="courseTitle" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. Present Simple Video" required>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700">Target Grade</label>
+                            <select id="courseGrade" class="w-full p-3 border rounded-lg outline-none">
+                                <option value="4">Grade 4</option>
+                                <option value="5">Grade 5</option>
+                                <option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option>
+                                <option value="8">Grade 8</option>
+                                <option value="9">Grade 9</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700">File Type</label>
+                            <select id="courseType" class="w-full p-3 border rounded-lg outline-none">
+                                <option value="video">Video Lesson</option>
+                                <option value="pdf">PDF Worksheet</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700">Select File</label>
+                        <input type="file" id="courseFile" class="w-full p-2 border border-dashed border-blue-300 rounded-lg" required>
+                    </div>
+                    <button type="submit" class="w-full bg-navy text-white font-bold py-3 rounded-lg hover:bg-blue-900 transition shadow-md">
+                        <i class="fas fa-cloud-upload-alt mr-2"></i> Publish Lesson
+                    </button>
+                </form>
+            </section>
+
+            <section class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-gold">
+    <h2 class="text-2xl font-bold text-navy mb-6 italic underline">Create New Exam</h2>
+    <form id="createExamForm" class="space-y-4">
+        <input type="text" id="examTitle" class="w-full p-3 border rounded-lg" placeholder="Exam Title" required>
+            <select id="examGrade" class="w-full p-3 border rounded-lg">
+            <option value="4">Grade 4</option>
+            <option value="5">Grade 5</option>
+            <option value="6">Grade 6</option>
+            <option value="7">Grade 7</option>
+            <option value="8">Grade 8</option>
+            <option value="9">Grade 9</option>
+        </select>
+            <input type="number" id="examDuration" class="w-full p-3 border rounded-lg" placeholder="Exam Duration (in minutes)" required>
+        
+        <div id="questionsBuilder" class="space-y-4 border-t pt-4">
+            <h3 class="font-bold text-navy">Questions:</h3>
+        </div>
+        
+        <button type="button" onclick="addQuestionField()" class="text-sm bg-gray-100 px-3 py-1 rounded border">
+            + Add Question
+        </button>
+
+        <button type="submit" class="w-full bg-yellow-500 text-white font-bold py-3 rounded-lg hover:bg-yellow-600 transition">
+            Save & Publish Exam
+        </button>
+    </form>
+
+<section class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-purple-500 mt-8 col-span-full">
+    <h2 class="text-2xl font-bold text-navy mb-6 flex items-center gap-2">
+        <i class="fas fa-tasks text-purple-500"></i> Manage Exams
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="examsList">
+        </div>
+</section>
+
+</section>
+<section class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-green-500 mt-8 col-span-full">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-2xl font-bold text-navy flex items-center gap-2">
+            <i class="fas fa-chart-line text-green-500"></i> Students Results
+        </h2>
+        
+        <div class="flex gap-2">
+            <button onclick="printResults()" class="bg-navy text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-900 transition flex items-center gap-2" style="background-color:#1E3A8A">
+                <i class="fas fa-print"></i> Print Report
+            </button>
+            
+            <button onclick="clearAllResults()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition flex items-center gap-2">
+                <i class="fas fa-trash-sweep"></i> Clear All Results
+            </button>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-50">
+                    <th class="p-4 border-b text-navy font-black uppercase text-xs">Student Name</th>
+                    <th class="p-4 border-b text-navy font-black uppercase text-xs text-center">Grade</th>
+                    <th class="p-4 border-b text-navy font-black uppercase text-xs">Exam Title</th>
+                    <th class="p-4 border-b text-navy font-black uppercase text-xs">Score</th>
+                    <th class="p-4 border-b text-navy font-black uppercase text-xs">Date</th>
+                    <th class="p-4 border-b text-navy font-black uppercase text-xs text-center">Status</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTableBody">
+                </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-orange-500 mt-8 col-span-full">
+    <h2 class="text-2xl font-bold text-navy mb-6 flex items-center gap-2">
+        <i class="fas fa-users-cog text-orange-500"></i> Student Accounts Management
+    </h2>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-50">
+                    <th class="p-4 border-b text-navy font-black uppercase text-xs">Username</th>
+<th class="p-4 border-b text-navy font-black uppercase text-xs text-center">Status</th> <th class="p-4 border-b text-navy font-black uppercase text-xs text-center">Password</th>
+                    <th class="p-4 border-b text-navy font-black uppercase text-xs">Username</th>
+                    <th class="p-4 border-b text-navy font-black uppercase text-xs text-center">Password</th>
+                    <th class="p-4 border-b text-navy font-black uppercase text-xs text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody id="usersTableBody">
+                </tbody>
+        </table>
+    </div>
+</section>
+
+        </div>
+    </main>
+
+    <footer class="bg-white border-t p-6 text-center mt-10">
+        <p class="text-gray-500 font-bold uppercase text-xs tracking-widest mb-1">Developed by</p>
+        <p class="text-navy font-black text-lg">Mohamed <span class="text-red-500">❤️</span> Hussein</p>
+    </footer>
+
+    <script>
+// دالة المسح الموحدة للامتحانات والدروس
+async function deleteContent(type, id) {
+    if (confirm("هل أنت متأكد من المسح؟")) {
+        const res = await fetch(`/api/content/${type}/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) {
+            alert("تم الحذف بنجاح ✅");
+            location.reload(); 
+        }
+    }
+}
+
+// دالة مسح حسابات الطلاب
+async function deleteUser(username) {
+    if (confirm("هل تريد حذف حساب هذا الطالب؟")) {
+        const res = await fetch(`/api/admin/users/${username}`, { method: 'DELETE' });
+        const result = await res.json();
+        if (result.success) {
+            alert("تم حذف الطالب ✅");
+            location.reload();
+        }
+    }
+}
+</script>
+
+    <script src="js/admin.js"></script>
+</body>
+</html>
