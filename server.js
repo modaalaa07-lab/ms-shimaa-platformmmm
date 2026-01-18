@@ -13,8 +13,8 @@ const PORT = process.env.PORT || 3000;
    1️⃣ بيانات الربط المباشرة (بدون .env) 
    انسخ البيانات دي من Supabase وحطها هنا بالظبط
 ================================ */
-const SUPABASE_URL = "https://pvlmziyldmvmubhmoazd.supabase.co"; // ضع رابط مشروعك هنا
-const SUPABASE_KEY = "sb_secret_0v45QnuDfQHlhhV7VzXOIw__DsKzFPy"; // ضع الـ Key الخاص بك هنا
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -50,11 +50,10 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     // التحقق من كلمة المرور
-    const isMatch = (password === user.password) || await bcrypt.compare(password, user.password).catch(() => false);
-    
-    if (!isMatch) {
-        return res.status(401).json({ success: false, message: "بيانات الدخول غير صحيحة" });
-    }
+    const isMatch = await bcrypt.compare(password, user.password);
+if (!isMatch) {
+   return res.status(401).json({ success:false });
+}
 
     // نظام المراجعة: لو الحساب is_active = false
     if (user.is_active === false) {
@@ -87,7 +86,7 @@ app.post('/api/auth/register', async (req, res) => {
         });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
     const { error } = await supabase.from('students').insert([{
         username,
@@ -186,5 +185,4 @@ app.delete('/api/clear-results', async (req, res) => {
 /* ===============================
    8️⃣ تشغيل السيرفر النهائي
 ================================ */
-app.listen(PORT, () => console.log(`🚀 السيرفر جاهز تماماً على بورت ${PORT}`));
 module.exports = app;
