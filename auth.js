@@ -1,15 +1,15 @@
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // السطور دي لازم تطابق الـ IDs اللي في الـ HTML بتاعك
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     const errorDiv = document.getElementById('errorMessage');
 
-    // إخفاء رسالة الخطأ لو كانت ظاهرة
     errorDiv.classList.add('hidden');
 
     try {
-        // الـ fetch هنا لازم يروح لـ /api/auth/login
+        // نستخدم رابط نسبي عشان يشتغل على Vercel أوتوماتيك
         const response = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -19,27 +19,20 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         const data = await response.json();
 
         if (response.ok && data.success) {
-            // حفظ البيانات في علبة 'user' زي ما إنت عامل
-            localStorage.setItem('user', JSON.stringify(data));
-            
-            // إضافة السطور دي عشان صفحة الأدمن تعرف تقرأ الرتبة بسهولة
+            // حفظ بيانات الجلسة
             localStorage.setItem('username', data.username);
             localStorage.setItem('role', data.role);
             localStorage.setItem('grade', data.grade);
             
-            // التوجيه
-            if (data.role === 'admin') {
-                window.location.href = 'admin.html';
-            } else {
-                window.location.href = 'main.html';
-            }
+            // التوجيه بناءً على الرتبة
+            window.location.href = (data.role === 'admin') ? 'admin.html' : 'main.html';
         } else {
             errorDiv.classList.remove('hidden');
             errorDiv.innerText = "Invalid username or password!";
         }
-    // السطر 48 في auth.js
-} catch (err) {
-    console.error("Connection Error:", err);
-    alert("عذراً، فشل الاتصال بالمنصة حالياً."); // خلي الرسالة كدة
-}
+    } catch (err) {
+        console.error("Connection Error:", err);
+        // التعديل هنا: شلنا أي سيرة لـ localhost عشان الرسالة المزعجة تختفي
+        alert("عذراً، فشل الاتصال بالمنصة. تأكد من جودة الإنترنت.");
+    }
 });
