@@ -4,25 +4,31 @@ let questionCount = 0;
 // 1. حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
 // فحص الصلاحيات أول ما الصفحة تفتح
 // 1. حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
+// 1. حماية الصفحة المطورة
+// حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
 document.addEventListener('DOMContentLoaded', () => {
-    // بنجيب كائن المستخدم اللي خذناه في auth.js
+    // 1. بنحاول نجيب الرتبة بأكتر من طريقة لضمان الدخول
+    const role = localStorage.getItem('role');
     const userData = localStorage.getItem('user');
     
-    // لو مفيش بيانات أصلاً
-    if (!userData) {
-        window.location.href = 'index.html';
-        return;
+    let userRole = role;
+
+    // 2. لو الرتبة مش موجودة بشكل منفصل، بنجيبها من كائن الـ user
+    if (!userRole && userData) {
+        try {
+            const user = JSON.parse(userData);
+            userRole = user.role;
+        } catch (e) {
+            console.error("Error parsing user data");
+        }
     }
 
-    const user = JSON.parse(userData);
-
-    // لو المستخدم مش أدمن.. اطرده
-    if (user.role !== 'admin') {
+    // 3. الفحص النهائي: لو مش أدمن اطرده فوراً
+    if (userRole !== 'admin') {
+        console.log("Access Denied: Redirecting to Login...");
         window.location.href = 'index.html';
     } else {
-        console.log("Welcome Admin!", user.username);
-        // تحديث اسم الأدمن في الهيدر لو حبيت
-        // document.querySelector('h1').innerText = `Welcome, ${user.username}`;
+        console.log("Access Granted: Welcome Admin!");
     }
 });
 

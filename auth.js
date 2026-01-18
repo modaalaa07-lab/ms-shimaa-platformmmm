@@ -19,16 +19,18 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         const data = await response.json();
 
         if (response.ok && data.success) {
-    // 1. خزن بيانات المستخدم كاملة في مكان واحد صح
+    // تخزين البيانات بكل الأشكال لضمان عمل كل الصفحات
     localStorage.setItem('user', JSON.stringify(data.user)); 
+    localStorage.setItem('role', data.user.role);
+    localStorage.setItem('username', data.user.username);
     
-    // 2. وجهه فوراً للمكان الصح بناءً على رتبته
+    // التوجيه
     if (data.user.role === 'admin') {
         window.location.href = 'admin.html';
     } else {
         window.location.href = 'main.html';
     }
-} else {
+}else {
     // لو فيه غلط اظهر الرسالة
     errorDiv.classList.remove('hidden');
     errorDiv.innerText = data.message || "Invalid username or password!";
