@@ -3,16 +3,26 @@ let questionCount = 0;
 
 // 1. حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
 // فحص الصلاحيات أول ما الصفحة تفتح
+// 1. حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
 document.addEventListener('DOMContentLoaded', () => {
-    const role = localStorage.getItem('role');
-    const username = localStorage.getItem('username');
+    // بنجيب كائن المستخدم اللي خذناه في auth.js
+    const userData = localStorage.getItem('user');
+    
+    // لو مفيش بيانات أصلاً
+    if (!userData) {
+        window.location.href = 'index.html';
+        return;
+    }
 
-    // لو مفيش بيانات أو المستخدم مش أدمن.. اطرده
-    if (!username || role !== 'admin') {
-        window.location.href = 'login.html';
+    const user = JSON.parse(userData);
+
+    // لو المستخدم مش أدمن.. اطرده
+    if (user.role !== 'admin') {
+        window.location.href = 'index.html';
     } else {
-        console.log("Welcome Admin!");
-        // هنا كود تحميل الإحصائيات والبيانات اللي موجود في ملفك الأصلي
+        console.log("Welcome Admin!", user.username);
+        // تحديث اسم الأدمن في الهيدر لو حبيت
+        // document.querySelector('h1').innerText = `Welcome, ${user.username}`;
     }
 });
 
