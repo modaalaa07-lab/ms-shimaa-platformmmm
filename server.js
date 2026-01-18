@@ -13,8 +13,8 @@ const PORT = process.env.PORT || 3000;
    1️⃣ بيانات الربط المباشرة (بدون .env) 
    انسخ البيانات دي من Supabase وحطها هنا بالظبط
 ================================ */
-const SUPABASE_URL = "https://pvlmziyldmvmubhmoazd.supabase.co";
-const SUPABASE_KEY = "sb_secret_0v45QnuDfQHlhhV7VzXOIw__DsKzFPy"; // الـ Secret اللي في الصورة
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -90,7 +90,7 @@ app.post('/api/auth/register', async (req, res) => {
 
     const { error } = await supabase.from('students').insert([{
         username,
-        password: hashedPassword,
+        password: hashed,
         grade,
         role: 'student',
         is_active: false // يسجل ويبقى في الانتظار حتى تفعله أنت
