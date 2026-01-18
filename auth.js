@@ -19,13 +19,15 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         const data = await response.json();
 
         if (response.ok && data.success) {
-            // حفظ بيانات الجلسة
-            localStorage.setItem('username', data.username);
-            localStorage.setItem('role', data.role);
-            localStorage.setItem('grade', data.grade);
+            // التعديل هنا: خزن الكائن بالكامل عشان main.js يشوفه
+            localStorage.setItem('user', JSON.stringify(data.user)); 
+            
+            // دول خليهم احتياطي لو محتاجهم بشكل منفصل
+            localStorage.setItem('username', data.user.username);
+            localStorage.setItem('role', data.user.role);
             
             // التوجيه بناءً على الرتبة
-            window.location.href = (data.role === 'admin') ? 'admin.html' : 'main.html';
+            window.location.href = (data.user.role === 'admin') ? 'admin.html' : 'main.html';
         } else {
             errorDiv.classList.remove('hidden');
             errorDiv.innerText = "Invalid username or password!";
