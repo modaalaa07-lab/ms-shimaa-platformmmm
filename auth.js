@@ -37,8 +37,9 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             errorDiv.classList.remove('hidden');
             errorDiv.innerText = "Invalid username or password!";
         }
-    } catch (err) {
-        console.error("Connection Error:", err);
-        alert("Cannot connect to server. Make sure node server.js is running.");
-    }
+    // السطر 48 في auth.js
+} catch (err) {
+    console.error("Connection Error:", err);
+    alert("عذراً، فشل الاتصال بالمنصة حالياً."); // خلي الرسالة كدة
+}
 });

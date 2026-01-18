@@ -97,10 +97,11 @@
                 // هيقولك السبب الحقيقي لو لسه فيه غلط
                 alert("❌ فشل التسجيل: " + result.message);
             }
-        } catch (err) {
-            console.error("Error details:", err);
-            alert("السيرفر مش شغال! اكتب node server.js في الـ Terminal");
-        }
+       // التعديل في السطر 102 (الرسالة اللي بتظهر لك)
+} catch (err) {
+    console.error("Error details:", err);
+    alert("حدث خطأ في الاتصال بالسيرفر، تأكد من اتصال الإنترنت"); // شيل كلمة localhost خالص من هنا
+}
     });
 </script>
 </body>
