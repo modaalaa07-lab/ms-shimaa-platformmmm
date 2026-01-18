@@ -19,19 +19,20 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         const data = await response.json();
 
         if (response.ok && data.success) {
-            // التعديل هنا: خزن الكائن بالكامل عشان main.js يشوفه
-            localStorage.setItem('user', JSON.stringify(data.user)); 
-            
-            // دول خليهم احتياطي لو محتاجهم بشكل منفصل
-            localStorage.setItem('username', data.user.username);
-            localStorage.setItem('role', data.user.role);
-            
-            // التوجيه بناءً على الرتبة
-            window.location.href = (data.user.role === 'admin') ? 'admin.html' : 'main.html';
-        } else {
-            errorDiv.classList.remove('hidden');
-            errorDiv.innerText = "Invalid username or password!";
-        }
+    // 1. خزن بيانات المستخدم كاملة في مكان واحد صح
+    localStorage.setItem('user', JSON.stringify(data.user)); 
+    
+    // 2. وجهه فوراً للمكان الصح بناءً على رتبته
+    if (data.user.role === 'admin') {
+        window.location.href = 'admin.html';
+    } else {
+        window.location.href = 'main.html';
+    }
+} else {
+    // لو فيه غلط اظهر الرسالة
+    errorDiv.classList.remove('hidden');
+    errorDiv.innerText = data.message || "Invalid username or password!";
+}
     } catch (err) {
         console.error("Connection Error:", err);
         // التعديل هنا: شلنا أي سيرة لـ localhost عشان الرسالة المزعجة تختفي
