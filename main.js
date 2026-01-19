@@ -1,21 +1,31 @@
 // 1. أول ما الصفحة تفتح التأكد من المستخدم
 // 1. حماية صفحة الطالب
-document.addEventListener('DOMContentLoaded', () => {
+(function() {
     const userData = localStorage.getItem('user');
+    
+    // 1. لو مفيش بيانات خالص، اطرده لصفحة الدخول
     if (!userData) {
-        window.location.href = 'index.html';
+        window.location.replace('login.html');
         return;
     }
 
     const user = JSON.parse(userData);
-    // لو اللي داخل "أدمن" ابعته لصفحته فوراً وما تفتحش صفحة الطالب
-    if (user.role === 'admin') {
-        window.location.href = 'admin.html';
+
+    // 2. لو اللي داخل هو الأدمن (Mohamed Morsy)، ابعته لصفحته فوراً
+    // ده بيمنع إنك كأدمن تتحبس في صفحة الطالب
+    if (user.username === 'Mohamed Morsy' || user.role === 'admin') {
+        window.location.replace('admin.html');
         return;
     }
+
+    // 3. لو طالب عادي، اعرض اسمه في المكان المخصص
+    const userNameElement = document.getElementById('userName');
+    if (userNameElement) {
+        userNameElement.innerText = user.username;
+    }
     
-    document.getElementById('welcomeName').innerText = `Welcome, ${user.username}`;
-});
+    console.log("Welcome Student:", user.username);
+})();
 
 // 2. الدالة اللي الزراير بتنادي عليها (مهمة جداً)
 function filterByGrade(gradeNumber) {

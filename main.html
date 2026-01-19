@@ -114,17 +114,15 @@
 
     <script>
     // التعديل الجديد والمظبوط لصفحة main.html
+    // التعديل الصح لصفحة main.html
+
     const userData = localStorage.getItem('user');
-    
     if (!userData) {
-        window.location.href = 'login.html';
+        window.location.replace('login.html'); // لو مفيش بيانات اطرده للـ login
     } else {
         const user = JSON.parse(userData);
-        // عرض اسم المستخدم سواء طالب أو أدمن
-        const welcomeElement = document.getElementById('welcomeName');
-        if (welcomeElement) {
-            welcomeElement.innerText = `Welcome, ${user.username} ${user.role === 'admin' ? '(Admin)' : ''}`;
-            welcomeElement.classList.remove('hidden');
+        if (user.role === 'admin' || user.username === 'Mohamed Morsy') {
+            window.location.replace('admin.html'); // لو أدمن دخل هنا بالغلط رجعه لصفحته
         }
     }
 

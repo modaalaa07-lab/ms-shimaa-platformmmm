@@ -5,15 +5,20 @@
 // حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
 (function() {
     const userData = localStorage.getItem('user');
+    
+    // 1. لو مفيش بيانات أصلاً، اطرده للـ Login
     if (!userData) {
         window.location.replace('login.html');
         return;
     }
+
     const user = JSON.parse(userData);
-    // لو أنت Mohamed Morsy أو الرتبة admin، مسموح لك تقعد في الصفحة
-    if (user.role === 'admin' || user.username === 'Mohamed Morsy') {
-        console.log("Access Granted!");
+
+    // 2. الحماية القصوى: لو مش Mohamed Morsy ومش Admin، اطرده لصفحة الطالب
+    if (user.username === 'Mohamed Morsy' || user.role === 'admin') {
+        console.log("Access Granted: Welcome Admin");
     } else {
+        // لو طالب حاول يدخل هنا، يترمي فوراً على صفحته
         window.location.replace('main.html');
     }
 })();
