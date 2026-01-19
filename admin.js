@@ -5,24 +5,16 @@
 // حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
 (function() {
     const userData = localStorage.getItem('user');
-    
     if (!userData) {
-        console.log("No user data found, redirecting...");
         window.location.replace('login.html');
         return;
     }
-
-    try {
-        const user = JSON.parse(userData);
-        // التأكد إن الرتبة أدمن
-        if (user.role !== 'admin') {
-            alert("غير مسموح لك بالدخول هنا!");
-            window.location.replace('main.html');
-        } else {
-            console.log("Welcome Admin Mohamed!");
-        }
-    } catch (e) {
-        window.location.replace('login.html');
+    const user = JSON.parse(userData);
+    // لو أنت Mohamed Morsy أو الرتبة admin، مسموح لك تقعد في الصفحة
+    if (user.role === 'admin' || user.username === 'Mohamed Morsy') {
+        console.log("Access Granted!");
+    } else {
+        window.location.replace('main.html');
     }
 })();
 
