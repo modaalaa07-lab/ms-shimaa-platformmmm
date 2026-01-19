@@ -33,70 +33,82 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 /* ===============================
-   3️⃣ نظام الدخول والمراجعة (Login) - النسخة المعدلة
+   1️⃣ نظام الدخول (Login)
 ================================ */
 app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
     
-    // 1. البحث في جدول users (مش students)
+    // البحث في جدول students (الاسم اللي في صورتك)
     const { data: user, error } = await supabase
-        .from('users') 
+        .from('students') 
         .select('*')
-        .eq('username', username)
+        .eq('username', username) 
         .single();
 
     if (error || !user) {
-        return res.status(401).json({ success: false, message: "Username not found!" });
+        return res.status(401).json({ success: false, message: "Username not found" });
     }
 
-    // 2. مقارنة الباسورد العادي (لأنك كاتبه بإيدك في Supabase)
-    // لو حبيت تستخدم bcrypt مستقبلاً لازم تسجل الطالب بـ hashed password
-    if (password !== user.password) {
-        return res.status(401).json({ success: false, message: "Wrong password!" });
+    // مقارنة الباسورد (لو كاتبه يدوي هيقارنه، ولوbcrypt هيجربه)
+    let isMatch = (password === user.password);
+    if (!isMatch) {
+        try { isMatch = await require('bcryptjs').compare(password, user.password); } catch(e) {}
     }
 
-    // 3. السماح للأدمن بالدخول حتى لو مش مفعل (is_active)
-    if (user.role !== 'admin' && user.is_active === false) {
-        return res.status(403).json({ 
-            success: false, 
-            message: "Your account is pending review by Ms. Shaimaa." 
-        });
+    if (!isMatch) {
+       return res.status(401).json({ success: false, message: "Password wrong" });
     }
 
-    // 4. إرسال البيانات كاملة للمتصفح
+    // لو admin يدخل علطول
+    if (user.role === 'admin') {
+        return res.json({ success: true, user });
+    }
+
+    // لو طالب يتأكد إنه متفعل (is_active)
+    if (user.is_active === false) {
+        return res.status(403).json({ success: false, message: "Account not active" });
+    }
+
     res.json({ success: true, user });
 });
 
 /* ===============================
-   4️⃣ نظام التسجيل (Register) - منع تكرار الأسماء
+   4️⃣ نظام التسجيل (Register) - النسخة المعتمدة
 ================================ */
 app.post('/api/auth/register', async (req, res) => {
     const { username, password, grade } = req.body;
 
-    // 1. فحص هل الاسم موجود مسبقاً في جدول users
-    const { data: existingUser } = await supabase
-        .from('users')
+    // 1. فحص لو الاسم موجود قبل كدة في جدول students
+    const { data: exists } = await supabase
+        .from('students') // التعديل: التأكد من استخدام students بدل users
         .select('username')
         .eq('username', username)
-        .maybeSingle();
+        .maybeSingle(); 
 
-    if (existingUser) {
+    if (exists) {
         return res.status(409).json({ 
             success: false, 
-            message: "This username is already taken. Please choose another one." 
+            message: "اسم المستخدم هذا محجوز، من فضلك اختر اسماً آخر." 
         });
     }
 
-    // 2. إدخال المستخدم الجديد (بدون تشفيرbcrypt عشان يشتغل مع كود الـ login اللي فوق)
-    const { error } = await supabase.from('users').insert([{
-        username,
-        password: password, // نص عادي لضمان الدخول السهل
-        grade,
-        role: 'student',
-        is_active: false 
+    // 2. تشفير الباسورد للحماية
+    const hashed = await bcrypt.hash(password, 10);
+
+    // 3. إدخال البيانات للأعمدة (username, password, grade, role, is_active)
+    const { error } = await supabase.from('students').insert([{
+        username: username,
+        password: hashed,
+        grade: grade,
+        role: 'student', // أي حد بيسجل جديد بيكون طالب
+        is_active: false // بيبقى غير مفعل لحد ما تفعلة أنت
     }]);
 
-    if (error) return res.status(500).json({ success: false, message: "Database Error" });
+    if (error) {
+        console.error(error);
+        return res.status(500).json({ success: false, message: "Database Error" });
+    }
+    
     res.json({ success: true });
 });
 
