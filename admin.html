@@ -176,28 +176,8 @@
 
     <script>
 // دالة المسح الموحدة للامتحانات والدروس
-async function deleteContent(type, id) {
-    if (confirm("هل أنت متأكد من المسح؟")) {
-        const res = await fetch(`/api/content/${type}/${id}`, { method: 'DELETE' });
-        const result = await res.json();
-        if (result.success) {
-            alert("تم الحذف بنجاح ✅");
-            location.reload(); 
-        }
-    }
-}
 
 // دالة مسح حسابات الطلاب
-async function deleteUser(username) {
-    if (confirm("هل تريد حذف حساب هذا الطالب؟")) {
-        const res = await fetch(`/api/admin/users/${username}`, { method: 'DELETE' });
-        const result = await res.json();
-        if (result.success) {
-            alert("تم حذف الطالب ✅");
-            location.reload();
-        }
-    }
-}
 </script>
 
     <script src="js/admin.js"></script>
