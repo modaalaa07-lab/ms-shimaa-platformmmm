@@ -18,20 +18,16 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
         const data = await response.json();
 
-       if (response.ok && data.success) {
-    // أهم سطر: بنسيف الكائن بالكامل
+     if (response.ok && data.success) {
     localStorage.setItem('user', JSON.stringify(data.user)); 
     
-    // توجيه ذكي
-    if (data.user.role === 'admin') {
-        window.location.href = 'admin.html';
+    // توجيه صارم
+    if (data.user.role === 'admin' || data.user.username === "Mohamed Morsy") {
+        window.location.replace('admin.html'); // استخدم replace بدل href عشان ميرجعش لورا
     } else {
-        // للطالب بنسيف بياناته الإضافية
-        localStorage.setItem('currentStudentName', data.user.username);
-        localStorage.setItem('studentGrade', data.user.grade);
-        window.location.href = 'main.html';
+        window.location.replace('main.html');
     }
-} else {
+}  else {
     // لو فيه غلط اظهر الرسالة
     errorDiv.classList.remove('hidden');
     errorDiv.innerText = data.message || "Invalid username or password!";
