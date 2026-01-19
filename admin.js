@@ -6,21 +6,28 @@
 (function() {
     const userData = localStorage.getItem('user');
     
-    // 1. لو مفيش بيانات أصلاً، اطرده للـ Login
+    // 1. لو مفيش بيانات دخول، اطرده لصفحة اللوجين
     if (!userData) {
-        window.location.replace('login.html');
+        window.location.replace('index.html');
         return;
     }
 
     const user = JSON.parse(userData);
 
-    // 2. الحماية القصوى: لو مش Mohamed Morsy ومش Admin، اطرده لصفحة الطالب
+    // 2. القوة الضاربة: لو اللي داخل هو أنت (الأدمن)، اطرده من هنا فوراً ووديه للأدمن
+    // السطر ده هو اللي هيفك "الحبسة" اللي أنت فيها في صفحة الطالب
     if (user.username === 'Mohamed Morsy' || user.role === 'admin') {
-        console.log("Access Granted: Welcome Admin");
-    } else {
-        // لو طالب حاول يدخل هنا، يترمي فوراً على صفحته
-        window.location.replace('main.html');
+        window.location.replace('admin.html');
+        return;
     }
+
+    // 3. لو طالب عادي، اعرض اسمه في الصفحة (لو عندك id="userName")
+    const welcomeElement = document.getElementById('userName');
+    if (welcomeElement) {
+        welcomeElement.innerText = user.username;
+    }
+    
+    console.log("Welcome, Student Access Granted.");
 })();
 
 // متغير لمتابعة عدد الأسئلة
