@@ -1,19 +1,15 @@
 document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // بيمنع الصفحة من عمل ريفريش عشان الكود يلحق يشتغل
 
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    const errorDiv = document.getElementById('errorMessage');
+    const username = document.getElementById('username').value.trim(); // بيسحب الاسم ويشيل المسافات الزائدة
+    const password = document.getElementById('password').value; // بيسحب الباسورد
 
-    if (errorDiv) errorDiv.classList.add('hidden');
-
-    // 1. طريق الأدمن (أنت فقط): دخول مباشر لصفحة التحكم
+    // 1. طريق الأدمن (أنت فقط): دخول مباشر لصفحة التحكم فوراً
     if (username === "Mohamed Morsy" && password === "123") {
         const adminUser = { username: "Mohamed Morsy", role: "admin" };
-        localStorage.setItem('user', JSON.stringify(adminUser));
-        console.log("Welcome Admin Mohamed!");
-        window.location.replace('admin.html'); 
-        return; // بنوقف الكود هنا عشان ميكملش لتحت
+        localStorage.setItem('user', JSON.stringify(adminUser)); // بيخزن بياناتك عشان الحارس في صفحة الأدمن يعرفك
+        window.location.replace('admin.html'); // بيفتح صفحة الأدمن وبيمسح صفحة اللوجين من الذاكرة لمنع الـ Loop
+        return; // سطر مهم جداً بيوقف الكود هنا عشان ميروحش للسيرفر كطالب
     }
 
     // 2. طريق الطلاب: يروحوا حصرياً لصفحة الـ main.html

@@ -53,42 +53,63 @@
     </div>
 
     <script>
-        // لو الطالب مسجل دخوله فعلاً، وفتحت صفحة الـ Login بالصدفة، دخله علطول
-if (localStorage.getItem('currentStudentName')) {
-    window.location.href = '/main.html';
-}
+        // كود المعالجة والتحقق من الهوية
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // سحب البيانات من الخانات باستخدام الـ IDs الصحيحة
+            const username = document.getElementById('loginUser').value.trim();
+            const password = document.getElementById('loginPass').value;
 
-        // استبدل الجزء اللي جوه الـ <script> في index.html بـ ده:
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    // التعديل هنا: نستخدم loginUser و loginPass زي ما هم مكتوبين في الـ HTML فوق
-    const username = document.getElementById('loginUser').value;
-    const password = document.getElementById('loginPass').value;
+            // 1. طريق الأدمن الإجباري (أنت فقط)
+            if (username === "Mohamed Morsy" && password === "123") {
+                const adminUser = { username: "Mohamed Morsy", role: "admin" };
+                localStorage.setItem('user', JSON.stringify(adminUser));
+                localStorage.setItem('currentStudentName', "Mohamed Morsy");
+                console.log("Welcome Back, Mohamed Morsy!");
+                window.location.replace('admin.html'); // التوجه للأدمن فوراً
+                return;
+            }
 
-    try {
-        const res = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ username, password })
+            // 2. طريق الطلاب والتحقق عبر السيرفر
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await res.json();
+
+                if (res.ok && result.success) {
+                    // تخزين البيانات بشكل صحيح للطلاب
+                    localStorage.setItem('user', JSON.stringify(result.user)); 
+                    localStorage.setItem('currentStudentName', result.user.username);
+                    
+                    // التوجيه بناءً على الرتبة من السيرفر
+                    if (result.user.role === 'admin') {
+                        window.location.replace('admin.html');
+                    } else {
+                        window.location.replace('main.html');
+                    }
+                } else {
+                    alert(result.message || "Invalid Username or Password!");
+                }
+            } catch (err) {
+                console.error("Connection Error:", err);
+                alert("Server Connection Error! Please try again.");
+            }
         });
 
-        const result = await res.json();
-
-        if (result.success) {
-            // تخزين البيانات بشكل صحيح
-            localStorage.setItem('user', JSON.stringify(result.user)); 
-            localStorage.setItem('currentStudentName', result.user.username);
-            
-            window.location.href = (result.user.role === 'admin') ? '/admin.html' : '/main.html';
-        } else {
-            alert(result.message || "Invalid Username or Password!");
-        }
-    } catch (err) {
-        console.error(err);
-        alert("Server Connection Error!");
-    }
-});
+        // حماية الصفحة: لو الأدمن مسجل دخوله فعلاً، يروح للأدمن بدل ما يشوف صفحة اللوجين
+        window.onload = () => {
+            const savedUser = JSON.parse(localStorage.getItem('user'));
+            if (savedUser) {
+                if (savedUser.username === 'Mohamed Morsy' || savedUser.role === 'admin') {
+                    window.location.replace('admin.html');
+                }
+            }
+        };
     </script>
 </body>
 </html>
