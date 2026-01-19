@@ -1,184 +1,180 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel | Ms. Shaimaa Faisal</title>
+    <title>Control Panel | Ms. Shaimaa Faisal</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background-color: #F8FAFC; }
-        .bg-navy { background-color: #1E3A8A; }
-        .text-gold { color: #FBBF24; }
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
+        body { font-family: 'Cairo', sans-serif; background-color: #f3f4f6; }
+        .navy-bg { background-color: #1e3a8a; }
+        .glass-effect { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #1e3a8a; border-radius: 10px; }
     </style>
 </head>
-<body class="flex flex-col min-h-screen">
+<body class="min-h-screen custom-scroll">
 
-    <header class="bg-navy text-white p-4 shadow-2xl flex justify-between items-center">
-        <div class="flex items-center gap-3">
-            <i class="fas fa-user-shield text-gold text-2xl"></i>
-            <h1 class="text-xl font-bold">Welcome, Ms. Shaimaa</h1>
+    <header class="navy-bg text-white sticky top-0 z-50 shadow-2xl px-6 py-4 flex flex-wrap justify-between items-center gap-4">
+        <div class="flex items-center gap-4">
+            <div class="bg-white p-2 rounded-2xl shadow-inner">
+                <i class="fas fa-chalkboard-teacher text-blue-900 text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-xl font-black leading-none">Ms. Shaimaa Faisal</h1>
+                <p class="text-[10px] text-blue-200 uppercase tracking-widest mt-1 font-bold">Admin Authority Center</p>
+            </div>
         </div>
-        <a href="main.html" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-bold transition">
-            <i class="fas fa-eye"></i> Student View
-        </a>
+
+        <div class="flex items-center gap-3">
+            <a href="main.html" target="_blank" class="bg-blue-500/20 border border-blue-400/50 hover:bg-blue-500 text-white px-5 py-2.5 rounded-2xl font-bold text-sm transition-all flex items-center gap-2">
+                <i class="fas fa-eye"></i> Student View
+            </a>
+            <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2.5 rounded-2xl font-bold text-sm transition-all flex items-center gap-2">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </div>
     </header>
 
-    <main class="container mx-auto p-6 flex-grow">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-    <div class="bg-blue-100 p-6 rounded-xl border-l-8 border-blue-600 shadow-sm">
-        <h3 class="text-blue-800 font-bold uppercase text-xs tracking-wider">Total Registered Students</h3>
-        <p id="statTotalStudents" class="text-3xl font-black text-blue-900 mt-2">Loading...</p>
-    </div>
-    <div class="bg-green-100 p-6 rounded-xl border-l-8 border-green-600 shadow-sm">
-        <h3 class="text-green-800 font-bold uppercase text-xs tracking-wider">Top Performing Exam</h3>
-        <p id="statBestExam" class="text-3xl font-black text-green-900 mt-2">Loading...</p>
-    </div>
-</div>
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <main class="max-w-[1600px] mx-auto p-6 lg:p-10">
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border-r-8 border-blue-600 relative overflow-hidden">
+                <i class="fas fa-users absolute -right-4 -bottom-4 text-blue-50 text-8xl"></i>
+                <p class="text-gray-400 font-bold text-xs uppercase relative z-10">Total Students</p>
+                <h3 id="totalStudents" class="text-4xl font-black text-navy-bg mt-2 relative z-10">0</h3>
+            </div>
+            <div class="bg-white p-6 rounded-[2.5rem] shadow-sm border-r-8 border-purple-600 relative overflow-hidden">
+                <i class="fas fa-book-open absolute -right-4 -bottom-4 text-purple-50 text-8xl"></i>
+                <p class="text-gray-400 font-bold text-xs uppercase relative z-10">Active Lessons</p>
+                <h3 id="totalLessons" class="text-4xl font-black text-navy-bg mt-2 relative z-10">0</h3>
+            </div>
+            <button onclick="clearAllResults()" class="bg-white p-6 rounded-[2.5rem] shadow-sm border-r-8 border-red-500 hover:bg-red-50 transition-all text-right group">
+                <p class="text-red-400 font-bold text-xs uppercase group-hover:text-red-600">Database Action</p>
+                <h3 class="text-xl font-black text-red-600 mt-2">Clear All Results <i class="fas fa-trash-alt text-sm"></i></h3>
+            </button>
+            <button onclick="printResults()" class="bg-white p-6 rounded-[2.5rem] shadow-sm border-r-8 border-green-500 hover:bg-green-50 transition-all text-right group">
+                <p class="text-green-400 font-bold text-xs uppercase group-hover:text-green-600">Reports</p>
+                <h3 class="text-xl font-black text-green-600 mt-2">Print Performance <i class="fas fa-print text-sm"></i></h3>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
             
-            <section class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-blue-500">
-                <h2 class="text-2xl font-bold text-navy mb-6 italic underline">Upload New Lesson</h2>
-                <form id="uploadCourseForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700">Lesson Title</label>
-                        <input type="text" id="courseTitle" class="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. Present Simple Video" required>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700">Target Grade</label>
-                            <select id="courseGrade" class="w-full p-3 border rounded-lg outline-none">
-                                <option value="4">Grade 4</option>
-                                <option value="5">Grade 5</option>
-                                <option value="6">Grade 6</option>
-                                <option value="7">Grade 7</option>
-                                <option value="8">Grade 8</option>
-                                <option value="9">Grade 9</option>
+            <div class="lg:col-span-5 space-y-10">
+                
+                <section class="bg-white p-8 rounded-[3rem] shadow-xl border-t-4 border-blue-900">
+                    <h2 class="text-2xl font-black mb-6 text-navy-bg flex items-center gap-3">
+                        <i class="fas fa-video text-blue-600"></i> Publish Lesson
+                    </h2>
+                    <form id="uploadCourseForm" class="space-y-4">
+                        <input type="text" id="courseTitle" placeholder="Lesson Title" class="w-full p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-blue-500 outline-none transition font-bold" required>
+                        <div class="grid grid-cols-2 gap-4">
+                            <select id="courseGrade" class="p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-blue-500 outline-none font-bold">
+                                <option value="4">Grade 4</option><option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
                             </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-bold text-gray-700">File Type</label>
-                            <select id="courseType" class="w-full p-3 border rounded-lg outline-none">
+                            <select id="courseType" class="p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-blue-500 outline-none font-bold">
                                 <option value="video">Video Lesson</option>
-                                <option value="pdf">PDF Worksheet</option>
+                                <option value="pdf">PDF Material</option>
                             </select>
                         </div>
+                        <div class="p-4 border-2 border-dashed border-gray-200 rounded-2xl text-center bg-gray-50 hover:bg-blue-50 transition cursor-pointer relative">
+                            <input type="file" id="courseFile" class="absolute inset-0 opacity-0 cursor-pointer" required>
+                            <i class="fas fa-file-upload text-3xl text-gray-300 mb-2"></i>
+                            <p class="text-xs text-gray-500 font-bold uppercase">Click to upload Video/File</p>
+                        </div>
+                        <button type="submit" class="w-full navy-bg text-white py-5 rounded-[2rem] font-black text-lg hover:shadow-2xl hover:scale-[1.02] active:scale-95 transition-all">
+                            PUBLISH CONTENT
+                        </button>
+                    </form>
+                </section>
+
+                <section class="bg-white p-8 rounded-[3rem] shadow-xl border-t-4 border-yellow-500">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-black text-navy-bg">Exam Creator</h2>
+                        <button type="button" onclick="addQuestionField()" class="bg-yellow-100 text-yellow-700 px-4 py-2 rounded-xl font-bold text-xs hover:bg-yellow-500 hover:text-white transition">
+                            + Add Question
+                        </button>
                     </div>
-                    <div>
-                        <label class="block text-sm font-bold text-gray-700">Select File</label>
-                        <input type="file" id="courseFile" class="w-full p-2 border border-dashed border-blue-300 rounded-lg" required>
+                    <form id="createExamForm" class="space-y-5">
+                        <input type="text" id="examTitle" placeholder="Exam Name (e.g. Unit 1 Quiz)" class="w-full p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-yellow-500 outline-none transition font-bold" required>
+                        <div class="grid grid-cols-2 gap-4">
+                            <select id="examGrade" class="p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-yellow-500 outline-none font-bold">
+                                <option value="4">Grade 4</option><option value="5">Grade 5</option><option value="6">Grade 6</option>
+                                <option value="7">Grade 7</option><option value="8">Grade 8</option><option value="9">Grade 9</option>
+                            </select>
+                            <input type="number" id="examDuration" placeholder="Time (Min)" class="p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-yellow-500 outline-none font-bold" required>
+                        </div>
+                        
+                        <div id="questionsBuilder" class="space-y-4 max-h-[500px] overflow-y-auto custom-scroll pr-2"></div>
+
+                        <button type="submit" class="w-full bg-yellow-500 text-white py-5 rounded-[2rem] font-black text-lg hover:shadow-2xl hover:scale-[1.02] transition-all">
+                            SAVE EXAM NOW
+                        </button>
+                    </form>
+                </section>
+            </div>
+
+            <div class="lg:col-span-7 space-y-10">
+                
+                <section class="bg-white rounded-[3rem] shadow-xl overflow-hidden">
+                    <div class="p-8 bg-gray-50 border-b flex justify-between items-center">
+                        <div>
+                            <h2 class="text-xl font-black text-navy-bg tracking-tight">Student Management</h2>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">Activate, View Passwords, or Delete</p>
+                        </div>
+                        <i class="fas fa-user-graduate text-gray-200 text-3xl"></i>
                     </div>
-                    <button type="submit" class="w-full bg-navy text-white font-bold py-3 rounded-lg hover:bg-blue-900 transition shadow-md">
-                        <i class="fas fa-cloud-upload-alt mr-2"></i> Publish Lesson
-                    </button>
-                </form>
-            </section>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-white text-gray-400 text-[10px] font-black uppercase border-b">
+                                <tr>
+                                    <th class="p-6">Student Name</th>
+                                    <th class="p-6 text-center">Status</th>
+                                    <th class="p-6 text-center">Password</th>
+                                    <th class="p-6 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                </tbody>
+                        </table>
+                    </div>
+                </section>
 
-            <section class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-gold">
-    <h2 class="text-2xl font-bold text-navy mb-6 italic underline">Create New Exam</h2>
-    <form id="createExamForm" class="space-y-4">
-        <input type="text" id="examTitle" class="w-full p-3 border rounded-lg" placeholder="Exam Title" required>
-            <select id="examGrade" class="w-full p-3 border rounded-lg">
-            <option value="4">Grade 4</option>
-            <option value="5">Grade 5</option>
-            <option value="6">Grade 6</option>
-            <option value="7">Grade 7</option>
-            <option value="8">Grade 8</option>
-            <option value="9">Grade 9</option>
-        </select>
-            <input type="number" id="examDuration" class="w-full p-3 border rounded-lg" placeholder="Exam Duration (in minutes)" required>
-        
-        <div id="questionsBuilder" class="space-y-4 border-t pt-4">
-            <h3 class="font-bold text-navy">Questions:</h3>
-        </div>
-        
-        <button type="button" onclick="addQuestionField()" class="text-sm bg-gray-100 px-3 py-1 rounded border">
-            + Add Question
-        </button>
+                <section class="bg-white rounded-[3rem] shadow-xl overflow-hidden">
+                    <div class="p-8 bg-gray-50 border-b flex justify-between items-center">
+                        <h2 class="text-xl font-black text-navy-bg">Exam Results Analysis</h2>
+                        <i class="fas fa-chart-line text-blue-200 text-3xl"></i>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-white text-gray-400 text-[10px] font-black uppercase border-b">
+                                <tr>
+                                    <th class="p-6">Name</th>
+                                    <th class="p-6 text-center">Grade</th>
+                                    <th class="p-6">Exam Title</th>
+                                    <th class="p-6 text-center">Score</th>
+                                    <th class="p-6 text-center">Result</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsTableBody">
+                                </tbody>
+                        </table>
+                    </div>
+                </section>
 
-        <button type="submit" class="w-full bg-yellow-500 text-white font-bold py-3 rounded-lg hover:bg-yellow-600 transition">
-            Save & Publish Exam
-        </button>
-    </form>
+                <section class="bg-white p-8 rounded-[3rem] shadow-xl">
+                    <h2 class="text-xl font-black text-navy-bg mb-6">Manage Existing Exams</h2>
+                    <div id="examsList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        </div>
+                </section>
 
-<section class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-purple-500 mt-8 col-span-full">
-    <h2 class="text-2xl font-bold text-navy mb-6 flex items-center gap-2">
-        <i class="fas fa-tasks text-purple-500"></i> Manage Exams
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="examsList">
-        </div>
-</section>
-
-</section>
-<section class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-green-500 mt-8 col-span-full">
-    <div class="flex justify-between items-center mb-6">
-        <h2 class="text-2xl font-bold text-navy flex items-center gap-2">
-            <i class="fas fa-chart-line text-green-500"></i> Students Results
-        </h2>
-        
-        <div class="flex gap-2">
-            <button onclick="printResults()" class="bg-navy text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-900 transition flex items-center gap-2" style="background-color:#1E3A8A">
-                <i class="fas fa-print"></i> Print Report
-            </button>
-            
-            <button onclick="clearAllResults()" class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-red-700 transition flex items-center gap-2">
-                <i class="fas fa-trash-sweep"></i> Clear All Results
-            </button>
-        </div>
-    </div>
-
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-gray-50">
-                    <th class="p-4 border-b text-navy font-black uppercase text-xs">Student Name</th>
-                    <th class="p-4 border-b text-navy font-black uppercase text-xs text-center">Grade</th>
-                    <th class="p-4 border-b text-navy font-black uppercase text-xs">Exam Title</th>
-                    <th class="p-4 border-b text-navy font-black uppercase text-xs">Score</th>
-                    <th class="p-4 border-b text-navy font-black uppercase text-xs">Date</th>
-                    <th class="p-4 border-b text-navy font-black uppercase text-xs text-center">Status</th>
-                </tr>
-            </thead>
-            <tbody id="resultsTableBody">
-                </tbody>
-        </table>
-    </div>
-</section>
-
-<section class="bg-white p-8 rounded-2xl shadow-lg border-t-4 border-orange-500 mt-8 col-span-full">
-    <h2 class="text-2xl font-bold text-navy mb-6 flex items-center gap-2">
-        <i class="fas fa-users-cog text-orange-500"></i> Student Accounts Management
-    </h2>
-    <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-            <thead>
-                <tr class="bg-gray-50">
-                    <th class="p-4 border-b text-navy font-black uppercase text-xs">Username</th>
-<th class="p-4 border-b text-navy font-black uppercase text-xs text-center">Status</th> <th class="p-4 border-b text-navy font-black uppercase text-xs text-center">Password</th>
-                    <th class="p-4 border-b text-navy font-black uppercase text-xs">Username</th>
-                    <th class="p-4 border-b text-navy font-black uppercase text-xs text-center">Password</th>
-                    <th class="p-4 border-b text-navy font-black uppercase text-xs text-center">Action</th>
-                </tr>
-            </thead>
-            <tbody id="usersTableBody">
-                </tbody>
-        </table>
-    </div>
-</section>
-
+            </div>
         </div>
     </main>
-
-    <footer class="bg-white border-t p-6 text-center mt-10">
-        <p class="text-gray-500 font-bold uppercase text-xs tracking-widest mb-1">Developed by</p>
-        <p class="text-navy font-black text-lg">Mohamed <span class="text-red-500">❤️</span> Hussein</p>
-    </footer>
-
-    <script>
-// دالة المسح الموحدة للامتحانات والدروس
-
-// دالة مسح حسابات الطلاب
-</script>
 
     <script src="js/admin.js"></script>
 </body>

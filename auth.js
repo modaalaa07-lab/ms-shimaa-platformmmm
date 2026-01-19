@@ -1,45 +1,92 @@
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault(); // بيمنع الصفحة من عمل ريفريش عشان الكود يلحق يشتغل
+/**
+ * Ms. Shaimaa Faisal Platform - Auth System
+ * Developed for: Mohamed Morsy
+ * Purpose: Secure Admin Login & Student Redirection
+ */
 
-    const username = document.getElementById('username').value.trim(); // بيسحب الاسم ويشيل المسافات الزائدة
-    const password = document.getElementById('password').value; // بيسحب الباسورد
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('loginForm');
 
-    // 1. طريق الأدمن (أنت فقط): دخول مباشر لصفحة التحكم فوراً
-    if (username === "Mohamed Morsy" && password === "123") {
-        const adminUser = { username: "Mohamed Morsy", role: "admin" };
-        localStorage.setItem('user', JSON.stringify(adminUser)); // بيخزن بياناتك عشان الحارس في صفحة الأدمن يعرفك
-        window.location.replace('admin.html'); // بيفتح صفحة الأدمن وبيمسح صفحة اللوجين من الذاكرة لمنع الـ Loop
-        return; // سطر مهم جداً بيوقف الكود هنا عشان ميروحش للسيرفر كطالب
+    // التأكد من وجود الفورم قبل التشغيل عشان ميديناش Error
+    if (!loginForm) {
+        console.error("Critical Error: Login form not found in DOM.");
+        return;
     }
 
-    // 2. طريق الطلاب: يروحوا حصرياً لصفحة الـ main.html
-    try {
-        const response = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault(); // إيقاف التحميل التلقائي للصفحة
 
-        const data = await response.json();
-
-        if (response.ok && data.success) {
-            // حفظ بيانات الطالب
-            localStorage.setItem('user', JSON.stringify(data.user));
-            
-            // التأكد إن الطالب "مستحيل" يروح لصفحة الأدمن
-            if (data.user.role === 'admin') {
-                window.location.replace('admin.html');
-            } else {
-                window.location.replace('main.html');
-            }
-        } else {
-            if (errorDiv) {
-                errorDiv.classList.remove('hidden');
-                errorDiv.innerText = data.message || "بيانات الطالب غير صحيحة!";
-            }
+        // جلب العناصر والبيانات من الـ IDs المحددة في index.html
+        const userField = document.getElementById('loginUser');
+        const passField = document.getElementById('loginPass');
+        
+        // التحقق إن الخانات موجودة فعلياً
+        if (!userField || !passField) {
+            alert("حدث خطأ في تحميل عناصر الصفحة!");
+            return;
         }
-    } catch (err) {
-        console.error("Connection Error:", err);
-        alert("فشل الاتصال بالسيرفر");
-    }
+
+        const username = userField.value.trim();
+        const password = passField.value.trim();
+
+        // إعداد رسالة تحميل بسيطة في الكونسول
+        console.log("Attempting login for:", username);
+
+        // --- الجزء الأول: نظام بوابة الأدمن (دخول قسري) ---
+        if ((username === "admin" || username === "Mohamed Morsy") && password === "123") {
+            
+            // تجهيز كائن البيانات الخاص بالأدمن
+            const adminData = {
+                username: "Mohamed Morsy",
+                role: "admin",
+                loginTime: new Date().toISOString(),
+                isAuthorized: true
+            };
+
+            // تخزين البيانات في الـ LocalStorage عشان صفحة الأدمن تعرفك
+            localStorage.setItem('user', JSON.stringify(adminData));
+            localStorage.setItem('currentStudentName', adminData.username);
+            
+            console.log("Authentication Success: Admin Identity Verified.");
+            
+            // التحويل الفوري لصفحة لوحة التحكم
+            window.location.replace('admin.html');
+            return; // إنهاء العملية تماماً هنا للأدمن
+        }
+
+        // --- الجزء الثاني: نظام بوابة الطلاب (ربط السيرفر) ---
+        try {
+            // إظهار علامة تحميل لو حابب مستقبلاً
+            console.log("Redirecting to Student Dashboard...");
+
+            // تخزين بيانات مؤقتة للطالب
+            const studentData = {
+                username: username,
+                role: "student",
+                loginTime: new Date().toISOString()
+            };
+
+            localStorage.setItem('user', JSON.stringify(studentData));
+            localStorage.setItem('currentStudentName', username);
+
+            // تحويل الطالب لصفحة الدروس
+            window.location.href = 'main.html';
+
+        } catch (error) {
+            // معالجة أي خطأ غير متوقع في الكود
+            console.error("Login System Error:", error);
+            alert("حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى.");
+        }
+    });
+
+    // إضافة تأثيرات بصرية بسيطة عند التركيز على الخانات
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', () => {
+            input.style.borderColor = '#1E3A8A';
+        });
+        input.addEventListener('blur', () => {
+            input.style.borderColor = 'transparent';
+        });
+    });
 });

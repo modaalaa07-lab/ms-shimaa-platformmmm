@@ -189,6 +189,103 @@ app.delete('/api/clear-results', async (req, res) => {
     res.json({ success: true, message: "تم مسح جميع النتائج بنجاح" });
 });
 
+// --- حتة الأدمن اللي ناقصة في السيرفر ---
+
+// 1. جلب كل الطلاب وباسورداتهم (للأدمن فقط)
+app.get('/api/admin/students', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('students') // تأكد إن اسم الجدول 'students'
+            .select('id, username, password, grade') // بنجيب الباسورد عشان تشوفه
+            .order('username', { ascending: true });
+
+        if (error) throw error;
+        res.status(200).json(data);
+    } catch (err) {
+        res.status(500).json({ error: 'تعذر جلب الطلاب: ' + err.message });
+    }
+});
+
+// 2. رفع درس جديد لقاعدة البيانات
+app.post('/api/lessons/upload', async (req, res) => {
+    const { title, videoUrl, grade, desc } = req.body;
+    
+    if (!title || !videoUrl || !grade) {
+        return res.status(400).json({ error: 'برجاء ملء جميع الخانات الأساسية' });
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('lessons') // تأكد إن عندك جدول اسمه 'lessons'
+            .insert([{ 
+                title, 
+                video_url: videoUrl, 
+                grade, 
+                description: desc,
+                created_at: new Date() 
+            }]);
+
+        if (error) throw error;
+        res.status(200).json({ success: true, message: 'تم رفع الدرس بنجاح' });
+    } catch (err) {
+        res.status(500).json({ error: 'فشل رفع الدرس: ' + err.message });
+    }
+});
+
+// 3. جلب نتائج الامتحانات
+app.get('/api/admin/results', async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('results')
+            .select('student_name, exam_title, score, date'); // تأكد إن دي أسامي الأعمدة في Supabase
+
+        if (error) throw error;
+
+        // تحويل الأسماء عشان الـ Frontend يفهمها (Mapping)
+        const formattedData = data.map(r => ({
+            studentName: r.student_name,
+            examTitle: r.exam_title,
+            score: r.score,
+            created_at: r.date
+        }));
+
+        res.json(formattedData);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// إضافة Route الإحصائيات اللي كان ناقص
+app.get('/api/admin/stats', async (req, res) => {
+    try {
+        const { count: studentCount } = await supabase.from('students').select('*', { count: 'exact', head: true });
+        const { count: lessonCount } = await supabase.from('lessons').select('*', { count: 'exact', head: true });
+        
+        res.json({
+            totalStudents: studentCount || 0,
+            totalLessons: lessonCount || 0
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 4. حذف طالب نهائياً
+app.delete('/api/admin/students/:id', async (req, res) => {
+    const { id } = req.params;
+    try {
+        const { error } = await supabase
+            .from('students')
+            .delete()
+            .eq('id', id);
+
+        if (error) throw error;
+        res.status(200).json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: 'فشل حذف الطالب' });
+    }
+});
+
 /* ===============================
    8️⃣ تشغيل السيرفر النهائي
 ================================ */

@@ -3,32 +3,6 @@
 // 1. حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
 // 1. حماية الصفحة المطورة
 // حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
-(function() {
-    const userData = localStorage.getItem('user');
-    
-    // 1. لو مفيش بيانات دخول، اطرده لصفحة اللوجين
-    if (!userData) {
-        window.location.replace('index.html');
-        return;
-    }
-
-    const user = JSON.parse(userData);
-
-    // 2. القوة الضاربة: لو اللي داخل هو أنت (الأدمن)، اطرده من هنا فوراً ووديه للأدمن
-    // السطر ده هو اللي هيفك "الحبسة" اللي أنت فيها في صفحة الطالب
-    if (user.username === 'Mohamed Morsy' || user.role === 'admin') {
-        window.location.replace('admin.html');
-        return;
-    }
-
-    // 3. لو طالب عادي، اعرض اسمه في الصفحة (لو عندك id="userName")
-    const welcomeElement = document.getElementById('userName');
-    if (welcomeElement) {
-        welcomeElement.innerText = user.username;
-    }
-    
-    console.log("Welcome, Student Access Granted.");
-})();
 
 // متغير لمتابعة عدد الأسئلة
 let questionCount = 0;
@@ -243,6 +217,11 @@ async function deleteContent(type, id) {
     }
 }
 
+function logout() {
+    localStorage.clear(); // بيمسح كل البيانات المتخزنة
+    window.location.replace('index.html'); // بيرجعك للوجين
+}
+
 function printResults() {
     const table = document.querySelector('table').outerHTML;
     const win = window.open('', '', 'height=700,width=900');
@@ -283,52 +262,53 @@ async function loadUsers() {
         const res = await fetch('/api/admin/users');
         const users = await res.json();
         const tableBody = document.getElementById('usersTableBody');
-        
-       tableBody.innerHTML = users.map(u => `
-    <tr class="hover:bg-gray-50 transition">
-        <td class="p-4 border-b font-bold text-navy">${u.username}</td>
-        
-        <td class="p-4 border-b text-center">
-            <span class="px-2 py-1 rounded-full text-xs font-bold ${u.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
-                ${u.is_active ? 'نشط' : 'معلق'}
-            </span>
-        </td>
+        if (!tableBody) return;
 
-        <td class="p-4 border-b text-center font-mono text-gray-600">${u.password}</td>
-
-        <td class="p-4 border-b text-center space-x-2">
-            <button onclick="toggleActivation('${u.username}', ${!u.is_active})" 
-                    class="px-3 py-1 rounded text-white text-xs font-bold transition ${u.is_active ? 'bg-orange-500' : 'bg-green-500 hover:bg-green-600'}">
-                ${u.is_active ? 'إيقاف' : 'تفعيل'}
-            </button>
-            
-            <button onclick="deleteUser('${u.username}')" class="text-red-500 hover:text-red-700">
-                <i class="fas fa-trash-alt"></i>
-            </button>
-        </td>
-    </tr>
-`).join('');
+        tableBody.innerHTML = users.map(u => `
+            <tr class="hover:bg-gray-50 transition">
+                <td class="p-4 border-b font-bold text-navy">${u.username}</td>
+                <td class="p-4 border-b text-center">
+                    <span class="px-2 py-1 rounded-full text-xs font-bold ${u.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">
+                        ${u.is_active ? 'Active' : 'Pending'}
+                    </span>
+                </td>
+                <td class="p-4 border-b text-center font-mono text-blue-600 bg-blue-50">${u.password}</td>
+                <td class="p-4 border-b text-center space-x-2">
+                    <button onclick="toggleActivation('${u.username}', ${!u.is_active})" 
+                            class="px-3 py-1 rounded text-white text-[10px] font-bold transition ${u.is_active ? 'bg-orange-500' : 'bg-green-500'}">
+                        ${u.is_active ? 'Block' : 'Activate'}
+                    </button>
+                    <button onclick="deleteUser('${u.username}')" class="text-red-500 hover:text-red-700 px-2">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            </tr>
+        `).join('');
         
-        // تحديث الرقم الإجمالي في الإحصائيات فوق
-        document.getElementById('statTotalStudents').innerText = users.length;
-    } catch (err) {
-        console.error("Error loading users:", err);
-    }
+        // تحديث الرقم في الإحصائيات
+        if(document.getElementById('totalStudents')) document.getElementById('totalStudents').innerText = users.length;
+    } catch (err) { console.error("Error loading users:", err); }
 }
 
-async function toggleActivation(username, status) {
+// دالة النتائج الموحدة
+async function loadResults() {
     try {
-        const res = await fetch('/api/admin/users/activate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, status })
-        });
-        if (res.ok) {
-            loadUsers(); // تحديث الجدول فوراً بعد التفعيل
-        }
-    } catch (err) {
-        alert("خطأ في الاتصال بالسيرفر");
-    }
+        const res = await fetch('/api/results'); 
+        const results = await res.json();
+        const tableBody = document.getElementById('resultsTableBody');
+        if (!tableBody) return;
+
+        tableBody.innerHTML = results.map(r => `
+            <tr class="hover:bg-gray-50 transition">
+                <td class="p-4 border-b font-bold">${r.studentName || r.student_name}</td>
+                <td class="p-4 border-b text-gray-600">${r.examTitle || r.exam_title}</td>
+                <td class="p-4 border-b font-black ${r.score >= 50 ? 'text-green-600' : 'text-red-600'}">
+                    ${r.score}%
+                </td>
+                <td class="p-4 border-b text-xs text-gray-400">${new Date(r.created_at || r.date).toLocaleString('ar-EG')}</td>
+            </tr>
+        `).join('');
+    } catch (err) { console.error("Error loading results:", err); }
 }
 
 // مسح طالب من المنصة نهائياً
@@ -362,14 +342,31 @@ async function deleteUser(username) {
 // أول ما الصفحة تفتح، بننادي الدالة دي
 async function loadDashboardStats() {
     try {
-        const response = await fetch('/api/admin/stats');
-        const data = await response.json();
-        
-        // بنغير كلمة Error و Loading بالأرقام الحقيقية
-        document.getElementById('statTotalStudents').innerText = data.totalStudents;
-        document.getElementById('statBestExam').innerText = data.bestExam;
-    } catch (error) {
-        console.log("Error fetching stats:", error);
+        const res = await fetch('/api/admin/stats');
+        const data = await res.json();
+        document.getElementById('totalStudents').innerText = data.totalStudents;
+        document.getElementById('totalLessons').innerText = data.totalLessons;
+    } catch (err) {
+        console.error("Stats Error:", err);
+    }
+}
+
+// إضافة وظيفة عرض الدروس للأدمن (عشان يشوف اللي رفعه)
+async function fetchLessons() {
+    try {
+        const res = await fetch('/api/lessons'); // لازم تعمل Route لده في السيرفر برضه
+        const lessons = await res.json();
+        const container = document.getElementById('lessonsList');
+        if (!container) return;
+
+        container.innerHTML = lessons.map(l => `
+            <div class="p-3 border-b flex justify-between items-center">
+                <span>${l.title} (Grade ${l.grade})</span>
+                <button onclick="deleteLesson('${l.id}')" class="text-red-500 text-sm">حذف</button>
+            </div>
+        `).join('');
+    } catch (err) {
+        console.error("Lessons Fetch Error:", err);
     }
 }
 
