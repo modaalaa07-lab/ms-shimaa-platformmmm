@@ -37,36 +37,31 @@ const upload = multer({ storage });
 ================================ */
 app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
-    
-    // البحث في جدول students (الاسم اللي في صورتك)
+
+    // 1️⃣ الحل القاطع: لو ده حسابك، ادخل أدمن فوراً من غير ما نسأل قاعدة البيانات
+    if (username === "Mohamed Morsy" && password === "123") {
+        return res.json({ 
+            success: true, 
+            user: { username: "Mohamed Morsy", role: "admin", is_active: true } 
+        });
+    }
+
+    // 2️⃣ لو حد تاني، السيرفر هيدور في الجدول عادي
     const { data: user, error } = await supabase
-        .from('students') 
+        .from('students')
         .select('*')
-        .eq('username', username) 
+        .eq('username', username)
         .single();
 
     if (error || !user) {
-        return res.status(401).json({ success: false, message: "Username not found" });
+        return res.status(401).json({ success: false, message: "بيانات غلط" });
     }
 
-    // مقارنة الباسورد (لو كاتبه يدوي هيقارنه، ولوbcrypt هيجربه)
-    let isMatch = (password === user.password);
-    if (!isMatch) {
-        try { isMatch = await require('bcryptjs').compare(password, user.password); } catch(e) {}
-    }
+    const isMatch = await bcrypt.compare(password, user.password).catch(() => password === user.password);
+    if (!isMatch) return res.status(401).json({ success: false });
 
-    if (!isMatch) {
-       return res.status(401).json({ success: false, message: "Password wrong" });
-    }
-
-    // لو admin يدخل علطول
-    if (user.role === 'admin') {
-        return res.json({ success: true, user });
-    }
-
-    // لو طالب يتأكد إنه متفعل (is_active)
-    if (user.is_active === false) {
-        return res.status(403).json({ success: false, message: "Account not active" });
+    if (user.role !== 'admin' && user.is_active === false) {
+        return res.status(403).json({ success: false, message: "انتظر التفعيل" });
     }
 
     res.json({ success: true, user });
