@@ -12,6 +12,13 @@
         .animate-fade-in { animation: fadeIn 0.5s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
+    <script>
+        // حماية فورية: لو بياناتك متخزنة ادخل علطول من غير ما تشوف اللوجين
+        const checkUser = JSON.parse(localStorage.getItem('user'));
+        if (checkUser && (checkUser.username === 'Mohamed Morsy' || checkUser.role === 'admin')) {
+            window.location.replace('admin.html');
+        }
+    </script>
 </head>
 <body class="flex items-center justify-center min-h-screen p-4">
 
@@ -53,55 +60,40 @@
     </div>
 
     <script>
-        // كود المعالجة والتحقق من الهوية
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    // سحب البيانات مع التأكد من حذف أي مسافات زيادة
-    const username = document.getElementById('loginUser').value.trim();
-    const password = document.getElementById('loginPass').value.trim();
+            e.preventDefault();
+            
+            const username = document.getElementById('loginUser').value.trim();
+            const password = document.getElementById('loginPass').value.trim();
 
-    console.log("Checking User:", username); // عشان تشوف الاسم اللي بيتكتب في الـ Console
-
-    // 1. القفل السحري للأدمن - ده هيشتغل قبل أي حاجة تانية
-    if (username === "Mohamed Morsy" && password === "123") {
-        const adminUser = { username: "Mohamed Morsy", role: "admin" };
-        localStorage.setItem('user', JSON.stringify(adminUser));
-        localStorage.setItem('currentStudentName', "Mohamed Morsy");
-        
-        console.log("Success! Redirecting to Admin...");
-        window.location.replace('admin.html'); 
-        return; 
-    }
-
-    // 2. كود السيرفر للطلاب (مبيشتغلش لو دخلت كأدمن فوق)
-    try {
-        const res = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ username, password })
-        });
-        const result = await res.json();
-        if (result.success) {
-            localStorage.setItem('user', JSON.stringify(result.user));
-            window.location.replace(result.user.role === 'admin' ? 'admin.html' : 'main.html');
-        } else {
-            alert("بيانات الطالب خطأ");
-        }
-    } catch (err) {
-        alert("مشكلة في الاتصال بالسيرفر");
-    }
-});
-
-        // حماية الصفحة: لو الأدمن مسجل دخوله فعلاً، يروح للأدمن بدل ما يشوف صفحة اللوجين
-        window.onload = () => {
-            const savedUser = JSON.parse(localStorage.getItem('user'));
-            if (savedUser) {
-                if (savedUser.username === 'Mohamed Morsy' || savedUser.role === 'admin') {
-                    window.location.replace('admin.html');
-                }
+            // 1. الأولوية القصوى للأدمن (أنت)
+            if (username === "Mohamed Morsy" && password === "123") {
+                const adminUser = { username: "Mohamed Morsy", role: "admin" };
+                localStorage.setItem('user', JSON.stringify(adminUser));
+                // توجيه نهائي لا رجعة فيه
+                window.location.replace('admin.html'); 
+                return false; 
             }
-        };
+
+            // 2. كود الطلاب
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ username, password })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    localStorage.setItem('user', JSON.stringify(result.user));
+                    // الطلاب فقط يروحوا للمين
+                    window.location.replace(result.user.role === 'admin' ? 'admin.html' : 'main.html');
+                } else {
+                    alert("بيانات الطالب خطأ");
+                }
+            } catch (err) {
+                alert("مشكلة في الاتصال بالسيرفر");
+            }
+        });
     </script>
 </body>
 </html>
