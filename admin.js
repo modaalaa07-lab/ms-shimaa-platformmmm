@@ -1,35 +1,41 @@
-// متغير لمتابعة عدد الأسئلة المضافة
-let questionCount = 0;
-
 // 1. حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
 // فحص الصلاحيات أول ما الصفحة تفتح
 // 1. حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
 // 1. حماية الصفحة المطورة
 // حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
-document.addEventListener('DOMContentLoaded', () => {
-    // 1. بنحاول نجيب الرتبة بأكتر من طريقة لضمان الدخول
+ (function() {
     const role = localStorage.getItem('role');
     const userData = localStorage.getItem('user');
-    
-    let userRole = role;
+    let isAdmin = false;
 
-    // 2. لو الرتبة مش موجودة بشكل منفصل، بنجيبها من كائن الـ user
-    if (!userRole && userData) {
-        try {
+    try {
+        if (role === 'admin') {
+            isAdmin = true;
+        } else if (userData) {
             const user = JSON.parse(userData);
-            userRole = user.role;
-        } catch (e) {
-            console.error("Error parsing user data");
+            if (user.role === 'admin') isAdmin = true;
         }
+    } catch (e) {
+        console.error("Auth Check Error");
     }
 
-    // 3. الفحص النهائي: لو مش أدمن اطرده فوراً
-    if (userRole !== 'admin') {
-        console.log("Access Denied: Redirecting to Login...");
-        window.location.href = 'index.html';
+    if (!isAdmin) {
+        console.log("Not an admin, redirecting...");
+        window.location.replace('index.html');
     } else {
         console.log("Access Granted: Welcome Admin!");
     }
+})();
+
+// متغير لمتابعة عدد الأسئلة
+let questionCount = 0;
+
+// تحميل البيانات عند فتح الصفحة
+document.addEventListener('DOMContentLoaded', () => {
+    loadDashboardStats();
+    loadResults();
+    loadExams();
+    loadUsers();
 });
 
 // 2. وظيفة إضافة خانات سؤال جديد (Quiz Builder) - المعدلة لإضافة الشرح
