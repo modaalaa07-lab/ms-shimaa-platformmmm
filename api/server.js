@@ -33,70 +33,70 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 /* ===============================
-   3️⃣ نظام الدخول والمراجعة (Login)
+   3️⃣ نظام الدخول والمراجعة (Login) - النسخة المعدلة
 ================================ */
 app.post('/api/auth/login', async (req, res) => {
     const { username, password } = req.body;
     
-    // البحث عن الطالب
+    // 1. البحث في جدول users (مش students)
     const { data: user, error } = await supabase
-        .from('students')
+        .from('users') 
         .select('*')
         .eq('username', username)
         .single();
 
     if (error || !user) {
-        return res.status(401).json({ success: false, message: "بيانات الدخول غير صحيحة" });
+        return res.status(401).json({ success: false, message: "Username not found!" });
     }
 
-    // التحقق من كلمة المرور
-    const isMatch = await bcrypt.compare(password, user.password);
-if (!isMatch) {
-   return res.status(401).json({ success:false });
-}
+    // 2. مقارنة الباسورد العادي (لأنك كاتبه بإيدك في Supabase)
+    // لو حبيت تستخدم bcrypt مستقبلاً لازم تسجل الطالب بـ hashed password
+    if (password !== user.password) {
+        return res.status(401).json({ success: false, message: "Wrong password!" });
+    }
 
-    // نظام المراجعة: لو الحساب is_active = false
-    if (user.is_active === false) {
+    // 3. السماح للأدمن بالدخول حتى لو مش مفعل (is_active)
+    if (user.role !== 'admin' && user.is_active === false) {
         return res.status(403).json({ 
             success: false, 
-            message: "تم استلام بياناتك، جارِ المراجعة من قبل الإدارة. حاول الدخول لاحقاً." 
+            message: "Your account is pending review by Ms. Shaimaa." 
         });
     }
 
+    // 4. إرسال البيانات كاملة للمتصفح
     res.json({ success: true, user });
 });
 
 /* ===============================
-   4️⃣ نظام التسجيل الذكي (منع التكرار)
+   4️⃣ نظام التسجيل (Register) - منع تكرار الأسماء
 ================================ */
 app.post('/api/auth/register', async (req, res) => {
     const { username, password, grade } = req.body;
 
-    // فحص لو الاسم موجود قبل كدة
-    const { data: exists } = await supabase
-        .from('students')
+    // 1. فحص هل الاسم موجود مسبقاً في جدول users
+    const { data: existingUser } = await supabase
+        .from('users')
         .select('username')
         .eq('username', username)
-        .single();
+        .maybeSingle();
 
-    if (exists) {
+    if (existingUser) {
         return res.status(409).json({ 
             success: false, 
-            message: "اسم المستخدم هذا محجوز، من فضلك اختر اسماً آخر أو أضف رقماً بجانبه." 
+            message: "This username is already taken. Please choose another one." 
         });
     }
 
-    const hashed = await bcrypt.hash(password, 10);
-
-    const { error } = await supabase.from('students').insert([{
+    // 2. إدخال المستخدم الجديد (بدون تشفيرbcrypt عشان يشتغل مع كود الـ login اللي فوق)
+    const { error } = await supabase.from('users').insert([{
         username,
-        password: hashed,
+        password: password, // نص عادي لضمان الدخول السهل
         grade,
         role: 'student',
-        is_active: false // يسجل ويبقى في الانتظار حتى تفعله أنت
+        is_active: false 
     }]);
 
-    if (error) return res.status(500).json({ success: false });
+    if (error) return res.status(500).json({ success: false, message: "Database Error" });
     res.json({ success: true });
 });
 
