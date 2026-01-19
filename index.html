@@ -55,51 +55,43 @@
     <script>
         // كود المعالجة والتحقق من الهوية
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            // سحب البيانات من الخانات باستخدام الـ IDs الصحيحة
-            const username = document.getElementById('loginUser').value.trim();
-            const password = document.getElementById('loginPass').value;
+    e.preventDefault();
+    
+    // سحب البيانات مع التأكد من حذف أي مسافات زيادة
+    const username = document.getElementById('loginUser').value.trim();
+    const password = document.getElementById('loginPass').value.trim();
 
-            // 1. طريق الأدمن الإجباري (أنت فقط)
-            if (username === "Mohamed Morsy" && password === "123") {
-                const adminUser = { username: "Mohamed Morsy", role: "admin" };
-                localStorage.setItem('user', JSON.stringify(adminUser));
-                localStorage.setItem('currentStudentName', "Mohamed Morsy");
-                console.log("Welcome Back, Mohamed Morsy!");
-                window.location.replace('admin.html'); // التوجه للأدمن فوراً
-                return;
-            }
+    console.log("Checking User:", username); // عشان تشوف الاسم اللي بيتكتب في الـ Console
 
-            // 2. طريق الطلاب والتحقق عبر السيرفر
-            try {
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ username, password })
-                });
+    // 1. القفل السحري للأدمن - ده هيشتغل قبل أي حاجة تانية
+    if (username === "Mohamed Morsy" && password === "123") {
+        const adminUser = { username: "Mohamed Morsy", role: "admin" };
+        localStorage.setItem('user', JSON.stringify(adminUser));
+        localStorage.setItem('currentStudentName', "Mohamed Morsy");
+        
+        console.log("Success! Redirecting to Admin...");
+        window.location.replace('admin.html'); 
+        return; 
+    }
 
-                const result = await res.json();
-
-                if (res.ok && result.success) {
-                    // تخزين البيانات بشكل صحيح للطلاب
-                    localStorage.setItem('user', JSON.stringify(result.user)); 
-                    localStorage.setItem('currentStudentName', result.user.username);
-                    
-                    // التوجيه بناءً على الرتبة من السيرفر
-                    if (result.user.role === 'admin') {
-                        window.location.replace('admin.html');
-                    } else {
-                        window.location.replace('main.html');
-                    }
-                } else {
-                    alert(result.message || "Invalid Username or Password!");
-                }
-            } catch (err) {
-                console.error("Connection Error:", err);
-                alert("Server Connection Error! Please try again.");
-            }
+    // 2. كود السيرفر للطلاب (مبيشتغلش لو دخلت كأدمن فوق)
+    try {
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ username, password })
         });
+        const result = await res.json();
+        if (result.success) {
+            localStorage.setItem('user', JSON.stringify(result.user));
+            window.location.replace(result.user.role === 'admin' ? 'admin.html' : 'main.html');
+        } else {
+            alert("بيانات الطالب خطأ");
+        }
+    } catch (err) {
+        alert("مشكلة في الاتصال بالسيرفر");
+    }
+});
 
         // حماية الصفحة: لو الأدمن مسجل دخوله فعلاً، يروح للأدمن بدل ما يشوف صفحة اللوجين
         window.onload = () => {
