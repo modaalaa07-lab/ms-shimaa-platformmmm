@@ -18,19 +18,20 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
         const data = await response.json();
 
-        if (response.ok && data.success) {
-    // تخزين البيانات بكل الأشكال لضمان عمل كل الصفحات
+       if (response.ok && data.success) {
+    // أهم سطر: بنسيف الكائن بالكامل
     localStorage.setItem('user', JSON.stringify(data.user)); 
-    localStorage.setItem('role', data.user.role);
-    localStorage.setItem('username', data.user.username);
     
-    // التوجيه
+    // توجيه ذكي
     if (data.user.role === 'admin') {
         window.location.href = 'admin.html';
     } else {
+        // للطالب بنسيف بياناته الإضافية
+        localStorage.setItem('currentStudentName', data.user.username);
+        localStorage.setItem('studentGrade', data.user.grade);
         window.location.href = 'main.html';
     }
-}else {
+} else {
     // لو فيه غلط اظهر الرسالة
     errorDiv.classList.remove('hidden');
     errorDiv.innerText = data.message || "Invalid username or password!";

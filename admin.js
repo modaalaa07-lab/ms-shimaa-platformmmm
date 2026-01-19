@@ -3,27 +3,26 @@
 // 1. حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
 // 1. حماية الصفحة المطورة
 // حماية الصفحة: التأكد أن الداخل هو الأدمن فقط
- (function() {
-    const role = localStorage.getItem('role');
+(function() {
     const userData = localStorage.getItem('user');
-    let isAdmin = false;
-
-    try {
-        if (role === 'admin') {
-            isAdmin = true;
-        } else if (userData) {
-            const user = JSON.parse(userData);
-            if (user.role === 'admin') isAdmin = true;
-        }
-    } catch (e) {
-        console.error("Auth Check Error");
+    
+    if (!userData) {
+        console.log("No user data found, redirecting...");
+        window.location.replace('login.html');
+        return;
     }
 
-    if (!isAdmin) {
-        console.log("Not an admin, redirecting...");
-        window.location.replace('index.html');
-    } else {
-        console.log("Access Granted: Welcome Admin!");
+    try {
+        const user = JSON.parse(userData);
+        // التأكد إن الرتبة أدمن
+        if (user.role !== 'admin') {
+            alert("غير مسموح لك بالدخول هنا!");
+            window.location.replace('main.html');
+        } else {
+            console.log("Welcome Admin Mohamed!");
+        }
+    } catch (e) {
+        window.location.replace('login.html');
     }
 })();
 
