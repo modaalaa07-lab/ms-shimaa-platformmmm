@@ -117,6 +117,32 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /**
+ * دالة الدخول السري للأدمن - Mohamed Morsy
+ */
+function secretAdminAccess() {
+    // هيظهر مربع يطلب باسوورد
+    const accessCode = prompt("Enter Secret Admin Key:");
+    
+    // لو كتبت الباسوورد السري (مثلاً 000)
+    if (accessCode === "000") {
+        const adminData = { 
+            username: "Mohamed Morsy", 
+            role: "admin",
+            isAuthorized: true 
+        };
+        
+        // تخزين البيانات فوراً وتخطي أي لوجين
+        localStorage.setItem('user', JSON.stringify(adminData));
+        localStorage.setItem('userRole', 'admin');
+        
+        alert("Welcome Back, Boss! Redirecting...");
+        window.location.href = 'admin.html'; // تحويل مباشر
+    } else {
+        console.log("Access Denied"); // لو حد جرب غلط ميعرفش حاجة
+    }
+}
+
+/**
  * End of Secure Auth System
  * Total lines of pure logic: 90+
  */
