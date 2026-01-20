@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+
+<script>
+   const userData = JSON.parse(localStorage.getItem('user'));
+   if (!userData || userData.role !== 'admin') { window.location.replace('index.html'); }
+</script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control Panel | Ms. Shaimaa Faisal</title>

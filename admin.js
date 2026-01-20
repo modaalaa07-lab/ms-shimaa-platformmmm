@@ -76,23 +76,79 @@ function addQuestionField() {
     qDiv.scrollIntoView({ behavior: 'smooth' });
 }
 
-// 3. معالجة رفع الكورسات (Videos/PDFs)
+/**
+ * @function uploadCourseContent
+ * @description رفع الدروس والفيديوهات مع مراقبة نسبة التحميل
+ */
 document.getElementById('uploadCourseForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    // 1. تجهيز العناصر والبيانات
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const fileInput = document.getElementById('courseFile');
+    const file = fileInput.files[0];
+    
+    // التحقق من حجم الملف (مثلاً منع رفع أكثر من 500 ميجا لو حابب)
+    if (file.size > 500 * 1024 * 1024) {
+        alert("⚠️ الملف كبير جداً! الحد الأقصى 500 ميجابايت.");
+        return;
+    }
+
     const formData = new FormData();
-    formData.append('title', document.getElementById('courseTitle').value);
+    formData.append('title', document.getElementById('courseTitle').value.trim());
     formData.append('grade', document.getElementById('courseGrade').value);
     formData.append('type', document.getElementById('courseType').value);
-    formData.append('file', document.getElementById('courseFile').files[0]);
+    formData.append('file', file);
+
+    // 2. تغيير حالة الزرار عشان ميدوسش مرتين
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> جاري الرفع... (0%)`;
 
     try {
-        const res = await fetch('/api/courses', { method: 'POST', body: formData });
-        if (res.ok) {
-            alert("🎯 Lesson Published Successfully!");
-            e.target.reset();
-        }
-    } catch (err) { alert("Error uploading file."); }
+        // استخدام XMLHttpRequest لمراقبة نسبة التحميل (أدق من fetch في الرفع)
+        const xhr = new XMLHttpRequest();
+        
+        // مراقبة التقدم
+        xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+                const percentComplete = Math.round((event.loaded / event.total) * 100);
+                submitBtn.innerHTML = `<i class="fas fa-upload"></i> جاري الرفع... ${percentComplete}%`;
+                submitBtn.style.background = `linear-gradient(90deg, #1e3a8a ${percentComplete}%, #3b82f6 ${percentComplete}%)`;
+            }
+        };
+
+        // عند اكتمال العملية
+        xhr.onload = function() {
+            if (xhr.status === 200 || xhr.status === 201) {
+                alert("🎯 تم نشر الدرس بنجاح يا بطل!");
+                e.target.reset();
+                loadDashboardStats(); // تحديث الأرقام في اللوحة
+            } else {
+                alert("❌ فشل الرفع: " + xhr.statusText);
+            }
+            resetSubmitButton(submitBtn);
+        };
+
+        xhr.onerror = () => {
+            alert("⚠️ خطأ في الاتصال بالسيرفر!");
+            resetSubmitButton(submitBtn);
+        };
+
+        xhr.open('POST', '/api/courses', true);
+        xhr.send(formData);
+
+    } catch (err) {
+        console.error("Upload Error:", err);
+        resetSubmitButton(submitBtn);
+    }
 });
+
+// دالة مساعدة لإعادة الزرار لحالته الأصلية
+function resetSubmitButton(btn) {
+    btn.disabled = false;
+    btn.innerHTML = `PUBLISH CONTENT`;
+    btn.style.background = `#1e3a8a`;
+}
 
 // 4. معالجة حفظ الامتحان (Exam Submission)
 document.getElementById('createExamForm').addEventListener('submit', async (e) => {
@@ -200,21 +256,16 @@ async function loadExams() {
 
 // دالة حذف الامتحان
 // دالة المسح الجديدة اللي بتكلم السيرفر و Supabase
-async function deleteContent(type, id) {
-    if (confirm("هل أنت متأكد من مسح هذا العنصر نهائياً؟")) {
-        try {
-            const res = await fetch(`/api/content/${type}/${id}`, {
-                method: 'DELETE'
-            });
-            const result = await res.json();
-            if (result.success) {
-                alert("تم الحذف بنجاح ✅");
-                location.reload(); // تحديث الصفحة عشان يختفي
-            }
-        } catch (err) {
-            alert("فشل في الاتصال بالسيرفر");
+// غير اسم الدالة من deleteContent لـ deleteExam أو العكس عشان يطابق الـ HTML
+async function deleteExam(id) {
+    if (!confirm("هل أنت متأكد من حذف هذا الامتحان نهائياً؟")) return;
+    try {
+        const res = await fetch(`/api/content/exams/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+            alert("✅ تم الحذف بنجاح");
+            loadExams(); // إعادة تحميل القائمة
         }
-    }
+    } catch (err) { alert("خطأ في الحذف"); }
 }
 
 function logout() {

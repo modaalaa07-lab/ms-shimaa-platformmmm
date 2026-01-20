@@ -1,92 +1,122 @@
 /**
- * Ms. Shaimaa Faisal Platform - Auth System
- * Developed for: Mohamed Morsy
- * Purpose: Secure Admin Login & Student Redirection
+ * @project Ms. Shaimaa Faisal Educational Platform
+ * @author Developed for Mohamed Morsy (Admin Authority)
+ * @version 2.0.0 - Extreme Stability Mode
+ * @description This script handles multi-role authentication with fail-safe redirection.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 1. التعريفات الأساسية والتأكد من عناصر الصفحة
     const loginForm = document.getElementById('loginForm');
+    const userField = document.getElementById('loginUser');
+    const passField = document.getElementById('loginPass');
 
-    // التأكد من وجود الفورم قبل التشغيل عشان ميديناش Error
+    // فحص أمان أولي: التأكد أن الفورم موجود لتجنب أخطاء الكونسول
     if (!loginForm) {
-        console.error("Critical Error: Login form not found in DOM.");
+        console.warn("Auth System: Login form elements not found in this page context.");
         return;
     }
 
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault(); // إيقاف التحميل التلقائي للصفحة
+    // 2. مستمع الأحداث لعملية تسجيل الدخول
+    loginForm.addEventListener('submit', async (event) => {
+        // منع السلوك الافتراضي للمتصفح (التحميل التلقائي)
+        event.preventDefault();
 
-        // جلب العناصر والبيانات من الـ IDs المحددة في index.html
-        const userField = document.getElementById('loginUser');
-        const passField = document.getElementById('loginPass');
-        
-        // التحقق إن الخانات موجودة فعلياً
-        if (!userField || !passField) {
-            alert("حدث خطأ في تحميل عناصر الصفحة!");
-            return;
-        }
+        // استخراج وتطهير البيانات المدخلة
+        const inputUsername = userField.value.trim();
+        const inputPassword = passField.value.trim();
 
-        const username = userField.value.trim();
-        const password = passField.value.trim();
+        console.log(`[Auth Log]: Attempting login sequence for user: ${inputUsername}`);
 
-        // إعداد رسالة تحميل بسيطة في الكونسول
-        console.log("Attempting login for:", username);
-
-        // --- الجزء الأول: نظام بوابة الأدمن (دخول قسري) ---
-        if ((username === "admin" || username === "Mohamed Morsy") && password === "123") {
+        // --- المرحلة الأولى: التحقق من الهوية السيادية (الأدمن) ---
+        // يتم فحص بياناتك "Mohamed Morsy" محلياً لضمان الدخول حتى لو السيرفر فيه مشكلة
+        if ((inputUsername === "Mohamed Morsy" || inputUsername === "admin") && inputPassword === "123") {
             
-            // تجهيز كائن البيانات الخاص بالأدمن
-            const adminData = {
+            console.log("[Auth Success]: Admin Access Granted. Preparing Secure Session...");
+
+            // إعداد كائن البيانات الكامل للأدمن (Payload)
+            const adminSessionData = {
                 username: "Mohamed Morsy",
                 role: "admin",
-                loginTime: new Date().toISOString(),
-                isAuthorized: true
+                isAuthorized: true,
+                loginTimestamp: new Date().toLocaleString('ar-EG'),
+                sessionID: 'ADM-' + Math.random().toString(36).substr(2, 9).toUpperCase()
             };
 
-            // تخزين البيانات في الـ LocalStorage عشان صفحة الأدمن تعرفك
-            localStorage.setItem('user', JSON.stringify(adminData));
-            localStorage.setItem('currentStudentName', adminData.username);
-            
-            console.log("Authentication Success: Admin Identity Verified.");
-            
-            // التحويل الفوري لصفحة لوحة التحكم
+            // تخزين البيانات في الـ LocalStorage بصيغة JSON موحدة لكل الصفحات
+            localStorage.setItem('user', JSON.stringify(adminSessionData));
+            localStorage.setItem('currentStudentName', adminSessionData.username);
+            localStorage.setItem('userRole', 'admin');
+
+            // التحويل الفوري لصفحة الإدارة (استخدام replace لمنع الرجوع للخلف)
             window.location.replace('admin.html');
-            return; // إنهاء العملية تماماً هنا للأدمن
+            return; // إنهاء الدالة فوراً لمنع تداخل كود الطلاب
         }
 
-        // --- الجزء الثاني: نظام بوابة الطلاب (ربط السيرفر) ---
+        // --- المرحلة الثانية: التحقق من هوية الطلاب عبر السيرفر ---
         try {
-            // إظهار علامة تحميل لو حابب مستقبلاً
-            console.log("Redirecting to Student Dashboard...");
+            console.log("[Auth Process]: Forwarding credentials to API server...");
 
-            // تخزين بيانات مؤقتة للطالب
-            const studentData = {
-                username: username,
-                role: "student",
-                loginTime: new Date().toISOString()
-            };
+            const response = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Cache-Control': 'no-cache'
+                },
+                body: JSON.stringify({ 
+                    username: inputUsername, 
+                    password: inputPassword 
+                })
+            });
 
-            localStorage.setItem('user', JSON.stringify(studentData));
-            localStorage.setItem('currentStudentName', username);
+            const result = await response.json();
 
-            // تحويل الطالب لصفحة الدروس
-            window.location.href = 'main.html';
+            if (result.success) {
+                console.log("[Auth Success]: Student credentials verified by database.");
 
-        } catch (error) {
-            // معالجة أي خطأ غير متوقع في الكود
-            console.error("Login System Error:", error);
-            alert("حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى.");
+                // دمج البيانات القادمة من السيرفر مع بيانات الجلسة المحلية
+                const studentSessionData = {
+                    ...result.user,
+                    loginTimestamp: new Date().toLocaleString('ar-EG'),
+                    device: navigator.userAgent.substring(0, 50)
+                };
+
+                // التخزين لضمان توافق الـ main.js مع الـ admin.js
+                localStorage.setItem('user', JSON.stringify(studentSessionData));
+                localStorage.setItem('currentStudentName', studentSessionData.username);
+                localStorage.setItem('userRole', studentSessionData.role);
+
+                // فحص الـ Role المحول من السيرفر كطبقة أمان ثانية
+                if (studentSessionData.role === 'admin') {
+                    window.location.replace('admin.html');
+                } else {
+                    window.location.replace('main.html');
+                }
+            } else {
+                // معالجة أخطاء السيرفر (بيانات غلط أو حساب غير مفعل)
+                alert(result.message || "❌ خطأ في الدخول: تأكد من الاسم وكلمة السر أو انتظر تفعيل الحساب.");
+            }
+
+        } catch (connectionError) {
+            console.error("[Auth Critical Error]: Failed to communicate with server.", connectionError);
+            alert("⚠️ فشل الاتصال بالسيرفر! تأكد من تشغيل الـ Backend (Node.js) الخاص بك.");
         }
     });
 
-    // إضافة تأثيرات بصرية بسيطة عند التركيز على الخانات
-    const inputs = document.querySelectorAll('input');
+    // 3. تحسينات تجربة المستخدم (UI Effects)
+    const inputs = [userField, passField];
     inputs.forEach(input => {
         input.addEventListener('focus', () => {
-            input.style.borderColor = '#1E3A8A';
+            input.parentElement.style.transform = "scale(1.02)";
+            input.parentElement.style.transition = "0.3s ease";
         });
         input.addEventListener('blur', () => {
-            input.style.borderColor = 'transparent';
+            input.parentElement.style.transform = "scale(1)";
         });
     });
 });
+
+/**
+ * End of Secure Auth System
+ * Total lines of pure logic: 90+
+ */
