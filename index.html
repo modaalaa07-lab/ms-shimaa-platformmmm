@@ -31,9 +31,7 @@
             <div class="inline-block p-4 bg-blue-50 rounded-full mb-4">
                 <i class="fas fa-sign-in-alt text-navy text-3xl" style="color:#1E3A8A"></i>
             </div>
-            <h1 onclick="secretAdminAccess()" style="color:#1E3A8A; cursor:pointer; position:relative; z-index:9999;" class="text-3xl font-black text-navy uppercase tracking-tight">
-    Welcome Back
-</h1>
+            <h1 id="welcomeText" onclick="secretAdminAccess()" style="color:#1E3A8A; cursor:pointer !important; position:relative; z-index:999; display:inline-block;" class="text-3xl font-black text-navy uppercase tracking-tight">Welcome Back</h1>
             <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mt-2">Login to your account</p>
         </div>
         
@@ -71,7 +69,7 @@
 
        <script>
 function secretAdminAccess() {
-    console.log("Secret Admin Access Triggered"); // للتأكد في الكونسول
+    console.log("Secret Admin Access Triggered"); 
     const accessCode = prompt("Enter Secret Admin Key:");
     if (accessCode === "000") {
         const adminData = { 
@@ -87,5 +85,7 @@ function secretAdminAccess() {
     }
 }
 </script>
+
+
 </body>
 </html>
