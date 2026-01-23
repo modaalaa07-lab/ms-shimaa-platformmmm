@@ -10,11 +10,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* ===============================
-   1️⃣ بيانات الربط المباشرة (بدون .env) 
-   انسخ البيانات دي من Supabase وحطها هنا بالظبط
+   1️⃣ Supabase Connection Setup
+   For Vercel deployment - environment variables are auto-loaded
+   For local dev - make sure .env file exists
 ================================ */
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_KEY;
+
+// Validate environment variables
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.error('ERROR: Missing Supabase credentials!');
+    console.error('Please set SUPABASE_URL and SUPABASE_ANON_KEY in your environment variables');
+}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 

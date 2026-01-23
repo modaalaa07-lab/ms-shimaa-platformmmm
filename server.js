@@ -1,3 +1,6 @@
+// Load environment variables from .env file
+require('dotenv').config();
+
 // مكتبات التشغيل الأساسية
 const express = require('express');
 const path = require('path');
@@ -10,13 +13,21 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 /* ===============================
-   1️⃣ بيانات الربط المباشرة (بدون .env) 
-   انسخ البيانات دي من Supabase وحطها هنا بالظبط
+   1️⃣ Supabase Connection Setup
+   Environment variables loaded from .env file
 ================================ */
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
+
+// Validate environment variables
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+    console.error('ERROR: Missing Supabase credentials!');
+    console.error('Please set SUPABASE_URL and SUPABASE_ANON_KEY in your .env file');
+    process.exit(1);
+}
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+console.log('Supabase client initialized successfully');
 
 /* ===============================
    2️⃣ الإعدادات العامة (Middlewares)
