@@ -96,8 +96,8 @@ async function loadGradeContent(grade) {
 }
 
 function logout() {
-    localStorage.removeItem('user');
-    window.location.href = 'index.html';
+    localStorage.clear(); // بيمسح كل البيانات المتخزنة
+    window.location.replace('index.html'); // بيرجعك للوجين
 }
 
 // الدالة اللي بتبدأ الامتحان

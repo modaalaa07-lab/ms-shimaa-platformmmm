@@ -13,8 +13,8 @@ const PORT = process.env.PORT || 3000;
    1️⃣ بيانات الربط المباشرة (بدون .env) 
    انسخ البيانات دي من Supabase وحطها هنا بالظبط
 ================================ */
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
